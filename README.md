@@ -17,6 +17,27 @@ named `DB`.
 
 ## Cloudflare Setup
 
+Create this as a **Cloudflare Pages** project, not a Workers project.
+
+Recommended Pages build settings:
+
+```text
+Framework preset: None
+Build command: npm run build
+Build output directory: .
+Root directory: /
+```
+
+Do not use `npx wrangler deploy` in the Cloudflare build settings. That command
+deploys a Worker and will fail for this Pages repository. If you deploy manually
+from your machine, use:
+
+```bash
+npm run deploy:pages
+```
+
+Then configure the backend:
+
 1. Create or connect a Cloudflare D1 database.
 2. Bind it to the Pages project as `DB`.
 3. Apply the schema:
