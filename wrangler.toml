@@ -1,0 +1,8 @@
+name = "sales-dashboard"
+pages_build_output_dir = "."
+compatibility_date = "2026-05-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sales-dashboard-db"
+database_id = "e195b010-b148-404a-ade6-d37af46027ee"

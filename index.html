@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>外贸部销售数据看板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root,html[data-theme="dark"]{--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--accent:#2563eb;--g2:#16a34a;--g3:#dc2626;--g4:#9333ea;--g5:#ea580c;--text:#e6edf3;--muted:#8b949e;--r:12px;--chart-grid:#30363d;--chart-text:#8b949e;--chart-tooltip-bg:#21262d;--chart-tooltip-border:#30363d;--chart-tooltip-title:#e6edf3;--chart-tooltip-body:#8b949e;--chart-canvas-bg:#161b22;--shadow:0 10px 30px rgba(0,0,0,0.5);--hover-shadow:0 14px 40px rgba(0,0,0,0.8)}
+html[data-theme="light"]{--bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--border:#e2e8f0;--accent:#2563eb;--g2:#16a34a;--g3:#dc2626;--g4:#9333ea;--g5:#ea580c;--text:#0f172a;--muted:#64748b;--chart-grid:#e2e8f0;--chart-text:#64748b;--chart-tooltip-bg:#ffffff;--chart-tooltip-border:#e2e8f0;--chart-tooltip-title:#0f172a;--chart-tooltip-body:#64748b;--chart-canvas-bg:#ffffff;--shadow:0 10px 30px rgba(0,0,0,0.05);--hover-shadow:0 14px 40px rgba(0,0,0,0.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
+a{color:inherit;text-decoration:none}
+
+/* animations */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
+
+/* header */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--g4));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1)}
+.btn:hover{background:var(--border);transform:translateY(-1px)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600}
+.btn-primary:hover{opacity:1;transform:translateY(-1px);animation:pulseGlow 1.5s infinite}
+.last-updated{color:var(--muted);font-size:12px}
+
+/* nav tabs */
+.nav-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.nav-tab{padding:12px 18px;cursor:pointer;font-size:13px;color:var(--muted);position:relative;white-space:nowrap;transition:all .2s ease}
+.nav-tab::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:2px;background:var(--accent);transition:all .3s ease;transform:translateX(-50%)}
+.nav-tab:hover{color:var(--text)}
+.nav-tab:hover::after{width:100%}
+.nav-tab.active{color:var(--accent);font-weight:600}
+.nav-tab.active::after{width:100%}
+
+/* filters */
+.filters{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-label{color:var(--muted);font-size:12px}
+select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:8px;font-size:13px;cursor:pointer;outline:none}
+select:focus{border-color:var(--accent)}
+
+/* main */
+main{padding:22px;max-width:1600px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.sec{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:0 0 14px}
+.sec-gap{margin-top:28px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);animation:fadeInUp 0.5s ease-out backwards}
+.kpi:hover{transform:translateY(-4px);box-shadow:var(--hover-shadow);border-color:var(--accent);z-index:1}
+.kpi:nth-child(1){animation-delay:0.05s}.kpi:nth-child(2){animation-delay:0.1s}.kpi:nth-child(3){animation-delay:0.15s}.kpi:nth-child(4){animation-delay:0.2s}.kpi:nth-child(5){animation-delay:0.25s}.kpi:nth-child(6){animation-delay:0.3s}.kpi:nth-child(7){animation-delay:0.35s}.kpi:nth-child(8){animation-delay:0.4s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ca,var(--accent))}
+.kpi-label{color:var(--muted);font-size:12px;margin-bottom:7px}
+.kpi-val{font-size:24px;font-weight:700;line-height:1}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:5px}
+.kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 7px;border-radius:20px;margin-top:7px;font-weight:600}
+.up{background:rgba(63,185,80,.15);color:var(--g2)}.down{background:rgba(247,129,102,.15);color:var(--g3)}
+
+/* chart card */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);animation:fadeInUp 0.6s ease-out backwards}
+.card:hover{transform:translateY(-2px);box-shadow:var(--hover-shadow)}
+.grid2 .card:nth-child(1),.grid3 .card:nth-child(1),.grid4 .card:nth-child(1){animation-delay:0.1s}
+.grid2 .card:nth-child(2),.grid3 .card:nth-child(2),.grid4 .card:nth-child(2){animation-delay:0.2s}
+.grid3 .card:nth-child(3),.grid4 .card:nth-child(3){animation-delay:0.3s}
+.grid4 .card:nth-child(4){animation-delay:0.4s}
+.card.full{grid-column:1/-1}
+.card.mb{margin-bottom:14px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.cw{position:relative}
+.dl-btn{background:none;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-size:13px;padding:0;line-height:1}
+.dl-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--muted)}
+.dl-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* table */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.tw-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tw-hd-title{font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--text)}
+thead th.sort-asc::after{content:' ▲'}
+thead th.sort-desc::after{content:' ▼'}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child{border-bottom:none}
+td{padding:9px 14px;font-size:13px}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600}
+.b-new{background:rgba(88,166,255,.15);color:var(--accent)}
+.b-old{background:rgba(210,168,255,.15);color:var(--g4)}
+.b-on{background:rgba(63,185,80,.15);color:var(--g2)}
+.b-off{background:rgba(255,166,87,.15);color:var(--g5)}
+.b-neutral{background:var(--surface2);color:var(--muted)}
+
+/* progress bars */
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.prog-lbl{width:90px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-bg{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(0.4, 0, 0.2, 1)}
+.prog-val{font-size:12px;color:var(--muted);min-width:70px;text-align:right}
+
+/* heatmap */
+.hm-wrap{overflow-x:auto}
+.hm{border-collapse:collapse;font-size:11px;width:100%}
+.hm th{padding:5px 8px;color:var(--muted);text-align:center;font-weight:500;white-space:nowrap}
+.hm td{padding:4px 6px;text-align:center;border-radius:4px;min-width:46px}
+.hm .sp-name{text-align:left;color:var(--text);font-weight:500;padding-right:12px;white-space:nowrap}
+
+/* donut legend */
+.donut-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+.dl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* tab switcher */
+.tab-bar{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:9px;width:fit-content}
+.tab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--muted);transition:all .15s}
+.tab.active{background:var(--surface);color:var(--text);font-weight:600}
+
+/* loading */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* rank medal */
+.medal{font-size:15px}
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:480px; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+.modal-hd { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.modal-title { font-weight:600; font-size:16px; }
+.modal-close { background:none; border:none; color:var(--muted); cursor:pointer; font-size:20px; line-height:1; }
+.modal-close:hover { color:var(--text); }
+.modal-bd { padding:20px; max-height:75vh; overflow-y:auto; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; margin-bottom:6px; font-size:12px; color:var(--muted); font-weight:500; }
+.form-group input, .form-group select { width:100%; padding:8px 12px; border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:6px; font-size:13px; outline:none; font-family:inherit; }
+.form-group input:focus, .form-group select:focus { border-color:var(--accent); }
+.form-row { display:flex; gap:14px; }
+.form-row .form-group { flex:1; }
+.modal-ft { padding:16px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+.form-status { min-height:18px; font-size:12px; color:var(--muted); }
+.form-status.error { color:var(--g3); }
+.row-actions { display:flex; gap:6px; }
+.inline-btn { border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }
+.inline-btn:hover { border-color:var(--muted); }
+.inline-btn.danger { color:var(--g3); }
+.inline-btn:disabled, .btn:disabled { opacity:.55; cursor:not-allowed; }
+
+@media(max-width:960px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .card.full{grid-column:auto}
+  main{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin"></div>
+  <div style="color:var(--muted);font-size:13px">Loading sales data…</div>
+</div>
+
+<div class="modal-overlay" id="addRecordModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="recordModalTitle" data-t="addRecordTitle">Add New Sales Record</div>
+      <button class="modal-close" onclick="closeAddRecordModal()">×</button>
+    </div>
+    <div class="modal-bd">
+      <form id="addRecordForm" onsubmit="submitAddRecord(event)">
+        <input type="hidden" id="recordId">
+        <div class="form-row">
+          <div class="form-group">
+            <label data-t="orderColDate">Date</label>
+            <input type="date" id="addDate" required>
+          </div>
+          <div class="form-group">
+            <label data-t="orderColSp">Salesperson</label>
+            <input type="text" id="addSp" list="addSpOptions" required>
+            <datalist id="addSpOptions"></datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-t="orderColCn">Country</label>
+            <input type="text" id="addCn" list="addCnOptions" required>
+            <datalist id="addCnOptions"></datalist>
+          </div>
+          <div class="form-group">
+            <label data-t="orderColStore">Store</label>
+            <input type="text" id="addStore" list="addStoreOptions">
+            <datalist id="addStoreOptions"></datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-t="orderColUSD">USD</label>
+            <input type="number" id="addUsd" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label data-t="orderColRMB">RMB</label>
+            <input type="number" id="addRmb" step="0.01" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-t="orderColCust">Customer Type</label>
+            <select id="addCust">
+              <option value="新客户" data-t="newCustomer">New Customer</option>
+              <option value="老客户" data-t="returning">Returning</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-t="orderColChan">Channel</label>
+            <select id="addChan">
+              <option value="线上" data-t="online">Online</option>
+              <option value="线下" data-t="offline">Offline</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-t="orderColOp">Operator/Source</label>
+            <input type="text" id="addOp" list="addOpOptions">
+            <datalist id="addOpOptions"></datalist>
+          </div>
+        </div>
+        <div class="form-status" id="recordStatus"></div>
+        <button type="submit" style="display:none"></button>
+      </form>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeAddRecordModal()" data-t="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveRecordBtn" onclick="document.getElementById('addRecordForm').requestSubmit()" data-t="saveBtn">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo"><div class="logo-icon">🪞</div>外贸部销售数据看板</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="last-updated" id="lastUpdated"></span>
+    <button class="btn btn-primary" style="background:var(--g2);border-color:var(--g2)" onclick="showAddRecordModal()" data-t="addRecordBtn">+ Add Record</button>
+    <button class="btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+    <button class="btn" id="langBtn" onclick="toggleLang()">中文</button>
+    <button class="btn btn-primary" onclick="location.reload()">⟳ Refresh</button>
+  </div>
+</header>
+
+<div class="nav-bar">
+  <div class="nav-tab active" onclick="showPage('overview',this)">Overview</div>
+  <div class="nav-tab" onclick="showPage('growth',this)">Growth & Trends</div>
+  <div class="nav-tab" onclick="showPage('quarterly',this)">Quarterly</div>
+  <div class="nav-tab" onclick="showPage('team',this)">Team Performance</div>
+  <div class="nav-tab" onclick="showPage('market',this)">Market Intelligence</div>
+  <div class="nav-tab" onclick="showPage('orders',this)">Orders</div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Filter:</span>
+  <select id="fYear" onchange="applyFilters()">
+    <option value="all">All Years</option>
+    <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+  </select>
+  <select id="fSp" onchange="applyFilters()"><option value="all">All Salespeople</option></select>
+  <select id="fCountry" onchange="applyFilters()"><option value="all">All Countries</option></select>
+  <select id="fChannel" onchange="applyFilters()">
+    <option value="all">All Channels</option>
+    <option value="线上">Online</option><option value="线下">Offline</option>
+  </select>
+  <select id="fStore" onchange="applyFilters()"><option value="all">All Stores</option></select>
+  <button class="btn" onclick="resetFilters()">Reset</button>
+</div>
+
+<main>
+
+<!-- ══════════ PAGE: OVERVIEW ══════════ -->
+<div class="page active" id="page-overview">
+  <div class="sec">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi" style="--ca:var(--accent)">
+      <div class="kpi-label">Total Revenue (USD)</div>
+      <div class="kpi-val" id="k-usd">—</div>
+      <div class="kpi-sub" id="k-usd-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g4)">
+      <div class="kpi-label">Total Revenue (RMB)</div>
+      <div class="kpi-val" id="k-rmb">—</div>
+      <div class="kpi-sub" id="k-rmb-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g2)">
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-val" id="k-orders">—</div>
+      <div class="kpi-sub" id="k-orders-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g5)">
+      <div class="kpi-label">New Customers</div>
+      <div class="kpi-val" id="k-new">—</div>
+      <div class="kpi-sub" id="k-new-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g3)">
+      <div class="kpi-label">Markets Reached</div>
+      <div class="kpi-val" id="k-countries">—</div>
+      <div class="kpi-sub" id="k-countries-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:#e3b341">
+      <div class="kpi-label">Avg USD Order Value</div>
+      <div class="kpi-val" id="k-avg">—</div>
+      <div class="kpi-sub" id="k-avg-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:#79c0ff">
+      <div class="kpi-label">Online Revenue %</div>
+      <div class="kpi-val" id="k-online">—</div>
+      <div class="kpi-sub" id="k-online-sub"></div>
+    </div>
+    <div class="kpi" style="--ca:#56d364">
+      <div class="kpi-label">Returning Customer Rev %</div>
+      <div class="kpi-val" id="k-ret">—</div>
+      <div class="kpi-sub" id="k-ret-sub"></div>
+    </div>
+  </div>
+
+  <div class="sec sec-gap" data-t="currentMonthSec">Current Month Analysis</div>
+  <div class="grid3">
+    <div class="card">
+      <div class="card-hd">
+        <div>
+          <div class="card-title" data-t="currentTopTitle">Top 5 Salespeople This Month</div>
+          <div class="card-sub" id="currentMonthLabel">—</div>
+        </div>
+      </div>
+      <div id="currentMonthTop5"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g2)">
+      <div class="kpi-label" data-t="currentChampionTitle">Monthly Sales Champion</div>
+      <div class="kpi-val" id="currentChampionName">—</div>
+      <div class="kpi-sub" id="currentChampionValue"></div>
+      <div class="kpi-delta up" id="currentChampionOrders"></div>
+    </div>
+    <div class="kpi" style="--ca:var(--g5)">
+      <div class="kpi-label" data-t="growthStarTitle">Growth Star</div>
+      <div class="kpi-val" id="growthStarName">—</div>
+      <div class="kpi-sub" id="growthStarValue"></div>
+      <div class="kpi-delta up" id="growthStarDelta"></div>
+    </div>
+  </div>
+
+  <!-- Revenue trend -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="trendTitle">Monthly Revenue Trend</div><div class="card-sub" data-t="trendSub">Revenue and order volume over time</div></div>
+      <div class="tab-bar">
+        <div class="tab active" data-tkey="tabUSD" onclick="setMode('usd',this,'chartTrend')">USD</div>
+        <div class="tab" data-tkey="tabRMB" onclick="setMode('rmb',this,'chartTrend')">RMB</div>
+        <div class="tab" data-tkey="tabOrders" onclick="setMode('orders',this,'chartTrend')">Orders</div>
+      </div>
+    </div>
+    <div class="cw" style="height:270px"><canvas id="chartTrend"></canvas></div>
+  </div>
+
+  <div class="grid3">
+    <!-- top countries -->
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="topCnTitle">Top Countries (USD)</div><div class="card-sub" data-t="topCnSub">Top 12 markets</div></div></div>
+      <div id="countryBars"></div>
+    </div>
+    <!-- new vs returning donut -->
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="custTypeTitle">Customer Type</div><div class="card-sub" data-t="custTypeSub">Order share</div></div></div>
+      <div class="cw" style="height:190px"><canvas id="chartCustType"></canvas></div>
+    </div>
+    <!-- channel donut -->
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="chanTitle">Channel Split</div><div class="card-sub" data-t="chanSub">Online vs Offline</div></div></div>
+      <div class="cw" style="height:190px"><canvas id="chartChannel"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="yoyTitle">Year-over-Year</div><div class="card-sub" data-t="yoySub">Monthly USD by year</div></div></div>
+      <div class="cw" style="height:230px"><canvas id="chartYoY"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="storeTitle">Store Performance</div><div class="card-sub" data-t="storeSub">USD revenue share</div></div></div>
+      <div class="cw" style="height:230px"><canvas id="chartStore"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: GROWTH & TRENDS ══════════ -->
+<div class="page" id="page-growth">
+
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="custTrendTitle">New vs Returning Customer Trend</div><div class="card-sub" data-t="custTrendSub">Monthly order count — stacked</div></div>
+    </div>
+    <div class="cw" style="height:270px"><canvas id="chartCustTrend"></canvas></div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="dealScatterTitle">Deal Size Distribution (Scatter)</div><div class="card-sub" data-t="dealScatterSub">Individual USD orders over time</div></div>
+    </div>
+    <div class="cw" style="height:350px"><canvas id="chartDealScatter"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="cumTitle">Cumulative Revenue (USD)</div><div class="card-sub" data-t="cumSub">Running total</div></div>
+        <div class="tab-bar">
+          <div class="tab active" data-tkey="tabAllTime" onclick="setMode('alltime',this,'chartCumulative')">All-Time</div>
+          <div class="tab" data-tkey="tabYoY" onclick="setMode('yoy',this,'chartCumulative')">YoY Overlay</div>
+        </div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartCumulative"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="distTitle">Order Value Distribution</div><div class="card-sub" data-t="distSub">USD order size buckets</div></div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartOrderDist"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="paretoTitle">Revenue Concentration (Pareto)</div><div class="card-sub" data-t="paretoSub">Top orders → cumulative USD share</div></div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartPareto"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="sourceTitle">Lead Source / Operator</div><div class="card-sub" data-t="sourceSub">Performance by lead origin</div></div>
+        <div class="tab-bar">
+          <div class="tab active" data-tkey="tabOrders" onclick="setMode('orders',this,'chartSource')">Orders</div>
+          <div class="tab" data-tkey="tabAOV" onclick="setMode('aov',this,'chartSource')">AOV</div>
+        </div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartSource"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="avgTitle">Monthly Avg Order Value (USD)</div><div class="card-sub" data-t="avgSub">Trend of average USD per order</div></div>
+    </div>
+    <div class="cw" style="height:230px"><canvas id="chartAvgOrder"></canvas></div>
+  </div>
+
+  <!-- Seasonality + Day of Week -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="seasonTitle">Seasonality Pattern</div><div class="card-sub" data-t="seasonSub">Average USD revenue by calendar month across all years</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartSeason"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="dowTitle">Revenue by Day of Week</div><div class="card-sub" data-t="dowSub">Total USD by weekday</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartDow"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top Biggest Orders -->
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title" data-t="bigOrdersTitle">Top 20 Largest Orders</div>
+      <span style="color:var(--muted);font-size:12px" data-t="bigOrdersSub">Sorted by USD amount</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>#</th><th data-t="orderColDate">Date</th><th data-t="orderColSp">Salesperson</th>
+          <th data-t="orderColCn">Country</th><th data-t="orderColUSD">USD</th>
+          <th data-t="orderColCust">Customer</th><th data-t="orderColChan">Channel</th><th data-t="orderColStore">Store</th>
+        </tr></thead>
+        <tbody id="bigOrdersBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: QUARTERLY ANALYSIS ══════════ -->
+<div class="page" id="page-quarterly">
+
+  <!-- Quarterly KPI Cards -->
+  <div class="sec" data-t="qKpiSec">Quarterly Snapshot</div>
+  <div id="qtrKpiGrid" class="kpi-grid"></div>
+
+  <!-- Quarterly Revenue Bar -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="qRevTitle">Quarterly Revenue</div><div class="card-sub" data-t="qRevSub">USD & RMB per quarter</div></div>
+      <div class="tab-bar">
+        <div class="tab active" data-tkey="tabUSD" onclick="setMode('usd',this,'chartQtrRev')">USD</div>
+        <div class="tab" data-tkey="tabRMB" onclick="setMode('rmb',this,'chartQtrRev')">RMB</div>
+        <div class="tab" data-tkey="tabOrders" onclick="setMode('orders',this,'chartQtrRev')">Orders</div>
+      </div>
+    </div>
+    <div class="cw" style="height:280px"><canvas id="chartQtrRev"></canvas></div>
+  </div>
+
+  <!-- QoQ Growth + Quarterly Mix -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="qGrowthTitle">Quarter-over-Quarter Growth</div><div class="card-sub" data-t="qGrowthSub">USD revenue % change</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartQoQ"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="qYoyTitle">Same Quarter Year-over-Year</div><div class="card-sub" data-t="qYoySub">Compare Q1/Q2/Q3/Q4 across years</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartQtrYoY"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Quarterly New vs Returning + Channel -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="qCustTitle">Quarterly Customer Mix</div><div class="card-sub" data-t="qCustSub">New vs Returning by quarter</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartQtrCust"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="qChanTitle">Quarterly Channel Mix</div><div class="card-sub" data-t="qChanSub">Online vs Offline USD per quarter</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartQtrChan"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Quarterly Salesperson Breakdown -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="qSpTitle">Quarterly Revenue by Salesperson</div><div class="card-sub" data-t="qSpSub">Stacked USD contribution per quarter</div></div>
+    </div>
+    <div class="cw" style="height:300px"><canvas id="chartQtrSp"></canvas></div>
+  </div>
+
+  <!-- Quarterly Performance Table -->
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title" data-t="qTableTitle">Quarterly Performance Summary</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead id="qtrTableHead"></thead>
+        <tbody id="qtrTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: TEAM PERFORMANCE ══════════ -->
+<div class="page" id="page-team">
+
+  <!-- Salesperson Scorecard Table -->
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title" data-t="spScorecard">Salesperson Scorecard</div>
+      <span style="color:var(--muted);font-size:12px" data-t="spSortHint">Click column headers to sort</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="spTable">
+        <thead>
+          <tr>
+            <th onclick="sortSpTable(0)">#</th>
+            <th onclick="sortSpTable(1)">Salesperson</th>
+            <th onclick="sortSpTable(2)">Orders</th>
+            <th onclick="sortSpTable(3)">USD Revenue</th>
+            <th onclick="sortSpTable(4)">RMB Revenue</th>
+            <th onclick="sortSpTable(5)">Avg USD Order</th>
+            <th onclick="sortSpTable(6)">New Cust %</th>
+            <th onclick="sortSpTable(7)">Countries</th>
+            <th onclick="sortSpTable(8)">Active Months</th>
+            <th onclick="sortSpTable(9)">Orders/Month</th>
+          </tr>
+        </thead>
+        <tbody id="spTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Salesperson Revenue Bar -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="spRevTitle">Revenue by Salesperson</div><div class="card-sub" data-t="spRevSub">USD total</div></div>
+        <div class="tab-bar">
+          <div class="tab active" data-tkey="tabUSD" onclick="setMode('usd',this,'chartSpRev')">USD</div>
+          <div class="tab" data-tkey="tabOrders" onclick="setMode('orders',this,'chartSpRev')">Orders</div>
+          <div class="tab" data-tkey="tabNewPct" onclick="setMode('newpct',this,'chartSpRev')">New%</div>
+        </div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartSpRev"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="spCnTitle">Countries per Salesperson</div><div class="card-sub" data-t="spCnSub">Market reach</div></div>
+      </div>
+      <div class="cw" style="height:250px"><canvas id="chartSpCountries"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Salesperson × Month Heatmap -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="hmTitle">Salesperson Monthly Revenue Heatmap</div><div class="card-sub" data-t="hmSub">USD per salesperson per month (darker = higher)</div></div>
+    </div>
+    <div class="hm-wrap" id="hmWrap"></div>
+  </div>
+
+  <!-- Salesperson Monthly Performance Trend -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="spTrendTitle">Salesperson Monthly Performance</div><div class="card-sub" data-t="spTrendSub">USD revenue trend per salesperson over time</div></div>
+    </div>
+    <div class="cw" style="height:320px"><canvas id="chartSpTrend"></canvas></div>
+  </div>
+
+  <!-- Salesperson Win Rate Trend -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="winRateTitle">New Customer Acquisition Rate</div><div class="card-sub" data-t="winRateSub">Monthly new customer % per salesperson</div></div>
+    </div>
+    <div class="cw" style="height:300px"><canvas id="chartWinRate"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: MARKET INTELLIGENCE ══════════ -->
+<div class="page" id="page-market">
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="cnTopTitle">Top 15 Countries by Revenue</div><div class="card-sub" data-t="cnTopSub">USD total</div></div>
+        <div class="tab-bar">
+          <div class="tab active" data-tkey="tabAll" onclick="setMode('all',this,'chartCnTop')">All</div>
+          <div class="tab" data-tkey="tabNew" onclick="setMode('new',this,'chartCnTop')">New Customers</div>
+        </div>
+      </div>
+      <div class="cw" style="height:320px"><canvas id="chartCnTop"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="cnOrdTitle">Countries by Order Count</div><div class="card-sub" data-t="cnOrdSub">Top 15</div></div>
+      </div>
+      <div id="cnOrderBars" style="padding-top:4px;max-height:320px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="storeChannelTitle">Store vs Channel Matrix</div><div class="card-sub" data-t="storeChannelSub">Online vs Offline USD per store</div></div>
+    </div>
+    <div class="cw" style="height:320px"><canvas id="chartStoreChannel"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="regionPieTitle">Regional Revenue Mix</div><div class="card-sub" data-t="regionPieSub">USD share by continent / region</div></div>
+        <div class="tab-bar">
+          <div class="tab active" data-tkey="tabAll" onclick="setMode('all',this,'chartRegionPie')">All</div>
+          <div class="tab" data-tkey="tabNew" onclick="setMode('new',this,'chartRegionPie')">New Customers</div>
+        </div>
+      </div>
+      <div class="cw" style="height:300px"><canvas id="chartRegionPie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title" data-t="regionRankTitle">Regional Performance</div><div class="card-sub" data-t="regionRankSub">USD, orders, and countries by region</div></div>
+      </div>
+      <div id="regionBars" style="padding-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- Country YoY Growth -->
+  <div class="card mb">
+    <div class="card-hd">
+      <div><div class="card-title" data-t="cnYoyTitle">Country Year-over-Year Growth</div><div class="card-sub" data-t="cnYoySub">USD revenue change — countries active in both years</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="setCnYoyPeriod('2024-2025',this)">2024→2025</div>
+        <div class="tab" onclick="setCnYoyPeriod('2025-2026',this)">2025→2026</div>
+      </div>
+    </div>
+    <div class="cw" style="height:360px"><canvas id="chartCnYoy"></canvas></div>
+  </div>
+
+  <!-- New Markets Discovery -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="newMktTitle">New Markets Discovered</div><div class="card-sub" data-t="newMktSub">Countries first reached each year</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartNewMkt"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="mktConcTitle">Market Concentration</div><div class="card-sub" data-t="mktConcSub">Revenue share of top N countries</div></div></div>
+      <div class="cw" style="height:250px"><canvas id="chartMktConc"></canvas></div>
+    </div>
+  </div>
+
+  <!-- New Markets Detail Table -->
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title" data-t="newMktTableTitle">New Markets Detail</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead id="newMktTableHead"></thead>
+        <tbody id="newMktTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Country performance table -->
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title" data-t="cnTableTitle">Country Performance</div>
+      <span style="color:var(--muted);font-size:12px" data-t="cnSortHint">Click headers to sort</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="cnTable">
+        <thead>
+          <tr>
+            <th onclick="sortCnTable(0)">#</th>
+            <th onclick="sortCnTable(1)">Country</th>
+            <th onclick="sortCnTable(2)">Orders</th>
+            <th onclick="sortCnTable(3)">USD Revenue</th>
+            <th onclick="sortCnTable(4)">Avg Order</th>
+            <th onclick="sortCnTable(5)">New Cust %</th>
+            <th onclick="sortCnTable(6)">Online %</th>
+            <th onclick="sortCnTable(7)">Top Salesperson</th>
+          </tr>
+        </thead>
+        <tbody id="cnTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ PAGE: ORDERS ══════════ -->
+<div class="page" id="page-orders">
+  <div class="tw">
+    <div class="tw-hd">
+      <div class="tw-hd-title">All Transactions</div>
+      <span style="color:var(--muted);font-size:12px" id="tableCount"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Salesperson</th><th>Country</th>
+            <th>USD</th><th>RMB</th><th>Customer</th><th>Channel</th><th>Store</th><th>Operator</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+Chart.register(ChartDataLabels);
+
+// ── State ────────────────────────────────────────────────────────────────────
+let ALL = [], F = [];
+let DATA_SUMMARY = {};
+let CI  = {};  // chart instances
+let spSortCol = 3, spSortDir = -1;
+let cnSortCol = 3, cnSortDir = -1;
+const trendMode  = { chartTrend: 'usd', chartSpRev: 'usd', chartQtrRev: 'usd' };
+const API_BASE = '/api/sales';
+let editingRecordId = null;
+
+// ── Colors ───────────────────────────────────────────────────────────────────
+const C = ['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ffa198','#bc8cff','#ffb77c','#a5d6ff','#85e89d','#e3b341','#f0883e','#ff7b72'];
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+async function boot() {
+  document.getElementById('loading').style.display = 'flex';
+  try {
+    const remoteData = await loadSalesDataFromApi();
+    DATA_SUMMARY = remoteData.summary || {};
+    ALL = remoteData.records || [];
+  } catch (err) {
+    document.getElementById('loading').innerHTML = `<div style="color:var(--g3);text-align:center;max-width:460px;padding:30px"><b>Cloudflare database unavailable</b><br><br>The dashboard requires the Cloudflare D1 backend at <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">/api/sales</code>.</div>`;
+    return;
+  }
+  updateLastUpdated();
+  populateFilters();
+  applyLangToDOM();
+  applyFilters();
+  document.getElementById('loading').style.display = 'none';
+}
+
+async function loadSalesDataFromApi() {
+  const res = await fetch(API_BASE, { headers: { accept: 'application/json' }, cache: 'no-store' });
+  if (!res.ok) throw new Error(`API load failed: ${res.status}`);
+  return res.json();
+}
+
+function updateLastUpdated() {
+  const generatedAt = DATA_SUMMARY?.generatedAt;
+  const d = generatedAt ? new Date(generatedAt) : new Date();
+  document.getElementById('lastUpdated').textContent = 'Updated: ' + d.toLocaleString() + ' - Cloudflare D1';
+}
+
+// ── Add Record ───────────────────────────────────────────────────────────────
+function showAddRecordModal() {
+  editingRecordId = null;
+  document.getElementById('recordId').value = '';
+  document.getElementById('recordModalTitle').textContent = t('addRecordTitle');
+  document.getElementById('saveRecordBtn').textContent = t('saveBtn');
+  setRecordStatus('');
+  document.getElementById('addRecordForm').reset();
+  document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('addRecordModal').classList.add('active');
+}
+function closeAddRecordModal() {
+  document.getElementById('addRecordModal').classList.remove('active');
+  document.getElementById('addRecordForm').reset();
+  setRecordStatus('');
+  editingRecordId = null;
+}
+async function submitAddRecord(e) {
+  e.preventDefault();
+  const record = readRecordForm();
+  if (!record.date) return;
+
+  setSaving(true);
+  setRecordStatus('');
+
+  try {
+    const saved = editingRecordId
+      ? await apiSaveRecord(editingRecordId, record)
+      : await apiCreateRecord(record);
+
+    if (editingRecordId) {
+      const idx = ALL.findIndex(r => Number(r.id) === Number(editingRecordId));
+      if (idx >= 0) ALL[idx] = saved;
+    } else {
+      ALL.push(saved);
+    }
+
+    refreshDashboard();
+    closeAddRecordModal();
+  } catch (err) {
+    setRecordStatus(err.message || 'Unable to save record.', true);
+  } finally {
+    setSaving(false);
+  }
+}
+
+function readRecordForm() {
+  const dateStr = document.getElementById('addDate').value;
+  const usdVal = parseFloat(document.getElementById('addUsd').value) || 0;
+  const rmbVal = parseFloat(document.getElementById('addRmb').value) || 0;
+  const operatorVal = normalizeOperator(document.getElementById('addOp').value);
+  return {
+    date: dateStr,
+    month: dateStr.slice(0, 7),
+    year: parseInt(dateStr.slice(0, 4)),
+    salesperson: document.getElementById('addSp').value.trim(),
+    country: document.getElementById('addCn').value.trim(),
+    usd: usdVal,
+    rmb: rmbVal,
+    custType: document.getElementById('addCust').value,
+    channel: document.getElementById('addChan').value,
+    store: document.getElementById('addStore').value.trim(),
+    operator: operatorVal,
+    source: operatorVal
+  };
+}
+
+function normalizeOperator(value) {
+  const text = String(value || '').trim();
+  return /^(na|n\/a)$/i.test(text) ? '' : text;
+}
+
+function refreshDashboard() {
+  DATA_SUMMARY = {
+    totalOrders: ALL.length,
+    totalUSD: ALL.reduce((sum, r) => sum + (Number(r.usd) || 0), 0),
+    totalRMB: ALL.reduce((sum, r) => sum + (Number(r.rmb) || 0), 0),
+    generatedAt: new Date().toISOString()
+  };
+  updateLastUpdated();
+  populateFilters();
+  applyLangToDOM();
+  applyFilters();
+}
+
+function setRecordStatus(message, isError=false) {
+  const el = document.getElementById('recordStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle('error', Boolean(isError));
+}
+
+function setSaving(isSaving) {
+  document.getElementById('saveRecordBtn').disabled = isSaving;
+}
+
+async function apiCreateRecord(record) {
+  return apiWrite(API_BASE, 'POST', record);
+}
+
+async function apiSaveRecord(id, record) {
+  return apiWrite(`${API_BASE}/${id}`, 'PUT', record);
+}
+
+async function apiWrite(url, method, record) {
+  const token = getAdminToken();
+  if (!token) throw new Error(t('adminTokenRequired'));
+  const res = await fetch(url, {
+    method,
+    headers: { 'content-type': 'application/json', accept: 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify(record),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    try { localStorage.removeItem('sales_admin_token'); } catch(e) {}
+  }
+  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  return data.record;
+}
+
+function getAdminToken() {
+  let token = '';
+  try { token = localStorage.getItem('sales_admin_token') || ''; } catch(e) {}
+  if (!token) {
+    token = prompt(t('adminTokenPrompt')) || '';
+    token = token.trim();
+    if (token) {
+      try { localStorage.setItem('sales_admin_token', token); } catch(e) {}
+    }
+  }
+  return token;
+}
+
+function showEditRecordModal(id) {
+  const record = ALL.find(r => Number(r.id) === Number(id));
+  if (!record) return;
+  editingRecordId = id;
+  document.getElementById('recordId').value = id;
+  document.getElementById('recordModalTitle').textContent = t('editRecordTitle');
+  document.getElementById('saveRecordBtn').textContent = t('updateBtn');
+  setRecordStatus('');
+  document.getElementById('addDate').value = record.date || '';
+  document.getElementById('addSp').value = record.salesperson || '';
+  document.getElementById('addCn').value = record.country || '';
+  document.getElementById('addStore').value = record.store || '';
+  document.getElementById('addUsd').value = record.usd || 0;
+  document.getElementById('addRmb').value = record.rmb || 0;
+  document.getElementById('addCust').value = record.custType || document.getElementById('addCust').value;
+  document.getElementById('addChan').value = record.channel || document.getElementById('addChan').value;
+  const op = record.operator || record.source || '';
+  document.getElementById('addOp').value = normalizeOperator(op);
+  document.getElementById('addRecordModal').classList.add('active');
+}
+
+async function deleteRecord(id) {
+  if (!confirm(t('deleteConfirm'))) return;
+  try {
+    const token = getAdminToken();
+    if (!token) throw new Error(t('adminTokenRequired'));
+    const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { accept: 'application/json', authorization: `Bearer ${token}` } });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      try { localStorage.removeItem('sales_admin_token'); } catch(e) {}
+    }
+    if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+    ALL = ALL.filter(r => Number(r.id) !== Number(id));
+    refreshDashboard();
+  } catch (err) {
+    alert(err.message || 'Unable to delete record.');
+  }
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  // lazy-render charts that might be on the newly visible page
+  renderAll();
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+function populateFilters() {
+  const unique = (key) => [...new Set(ALL.map(r=>r[key]).filter(Boolean))].sort();
+  fill('fSp',      'All Salespeople', unique('salesperson'));
+  fill('fCountry', 'All Countries',   unique('country'));
+  fill('fStore',   'All Stores',      unique('store'));
+  populateRecordChoices(unique);
+}
+function fill(id, placeholder, items) {
+  document.getElementById(id).innerHTML =
+    `<option value="all">${placeholder}</option>` +
+    items.map(v=>`<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('');
+}
+function populateRecordChoices(unique) {
+  fillDatalist('addSpOptions', unique('salesperson'));
+  fillDatalist('addCnOptions', unique('country'));
+  fillDatalist('addStoreOptions', unique('store'));
+  const operators = [
+    '刘畅',
+    ...unique('operator'),
+    ...unique('source')
+  ].map(normalizeOperator).filter(Boolean);
+  fillDatalist('addOpOptions', [...new Set(operators)].sort());
+}
+function fillDatalist(id, items) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = items.map(v=>`<option value="${escHtml(v)}"></option>`).join('');
+}
+function escHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+function applyFilters() {
+  const yr = v('fYear'), sp = v('fSp'), cn = v('fCountry'), ch = v('fChannel'), st = v('fStore');
+  F = ALL.filter(r =>
+    (yr==='all'||r.year==yr) &&
+    (sp==='all'||r.salesperson===sp) &&
+    (cn==='all'||r.country===cn) &&
+    (ch==='all'||(r.channel&&r.channel.includes(ch))) &&
+    (st==='all'||r.store===st)
+  );
+  renderAll();
+}
+function resetFilters() {
+  ['fYear','fSp','fCountry','fChannel','fStore'].forEach(id=>{ document.getElementById(id).value='all'; });
+  applyFilters();
+}
+function v(id) { return document.getElementById(id).value; }
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderKPIs();
+  const active = document.querySelector('.page.active')?.id || '';
+  if(active === 'page-overview') {
+    renderCurrentMonthAnalysis();
+    renderTrend(); renderYoY(); renderCountryBars();
+    renderCustTypeDonut(); renderChannelDonut(); renderStoreDonut();
+  } else if(active === 'page-growth') {
+    renderCustTrend(); renderDealScatter(); renderCumulative(); renderOrderDist();
+    renderPareto(); renderSource(); renderAvgOrder();
+    renderSeason(); renderDow(); renderBigOrders();
+  } else if(active === 'page-quarterly') {
+    renderQtrKPIs(); renderQtrRev(); renderQoQ(); renderQtrYoY();
+    renderQtrCust(); renderQtrChan(); renderQtrSp(); renderQtrTable();
+  } else if(active === 'page-team') {
+    renderSpTable(); renderSpRevChart(); renderSpCountries(); renderHeatmap();
+    renderSpTrend(); renderWinRate();
+  } else if(active === 'page-market') {
+    renderCnTable(); renderCnTop(); renderCnOrderBars();
+    renderStoreChannel(); renderRegionAnalysis(); renderCnYoy(); renderNewMkt(); renderMktConc(); renderNewMktTable();
+  } else if(active === 'page-orders') {
+    renderOrderTable();
+  }
+  setTimeout(injectDownloadButtons, 50);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmt(n,d=0){ return n==null?'—':n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function monthLabel(m){ const [y,mo]=m.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo-1]+' '+y.slice(2); }
+function allMonths() { return [...new Set(F.map(r=>r.month).filter(Boolean))].sort(); }
+function groupBy(arr, key, val) {
+  const m = {};
+  arr.forEach(r => { const k=r[key]; if(!m[k]) m[k]=0; m[k]+=(val?r[val]:1); });
+  return m;
+}
+function dc(id) { if(CI[id]){CI[id].destroy();delete CI[id];} }
+
+// read CSS variable from current theme
+function tc(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function darkOpts({ yPfx='', indexAxis='x', spanGaps=false }={}) {
+  const valAxis = indexAxis==='y' ? 'x' : 'y';
+  const catAxis = indexAxis==='y' ? 'y' : 'x';
+  const valTick = val=>(yPfx+(val>=1e6?(val/1e6).toFixed(1)+'M':val>=1000?(val/1000).toFixed(0)+'K':val));
+  const grid=tc('--chart-grid'), txt=tc('--chart-text'), ttBg=tc('--chart-tooltip-bg'), ttBd=tc('--chart-tooltip-border'), ttT=tc('--chart-tooltip-title'), ttB=tc('--chart-tooltip-body');
+  return {
+    responsive:true, maintainAspectRatio:false, spanGaps, indexAxis,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ labels:{ color:txt, boxWidth:12, font:{size:12} } },
+      tooltip:{ backgroundColor:ttBg, borderColor:ttBd, borderWidth:1, titleColor:ttT, bodyColor:ttB,
+        callbacks:{ label: ctx=>{
+          const raw = ctx.parsed[valAxis]??ctx.raw;
+          if(raw==null) return null;
+          return ' '+ctx.dataset.label+': '+yPfx+fmt(raw);
+        }}
+      },
+      datalabels:{ display:false }
+    },
+    scales:{
+      [catAxis]:{ grid:{color:grid}, ticks:{color:txt,font:{size:11}} },
+      [valAxis]:{ grid:{color:grid}, ticks:{color:txt,font:{size:11}, callback: yPfx ? valTick : val=>val } }
+    }
+  };
+}
+function donutOpts() {
+  const txt=tc('--chart-text'), ttBg=tc('--chart-tooltip-bg'), ttBd=tc('--chart-tooltip-border'), ttT=tc('--chart-tooltip-title'), ttB=tc('--chart-tooltip-body');
+  return {
+    responsive:true, maintainAspectRatio:false, cutout:'62%',
+    plugins:{
+      legend:{ position:'bottom', labels:{ color:txt, boxWidth:10, font:{size:11}, padding:8 } },
+      tooltip:{ backgroundColor:ttBg, borderColor:ttBd, borderWidth:1, titleColor:ttT, bodyColor:ttB },
+      datalabels:{ formatter:(val,ctx)=>{ const total=ctx.dataset.data.reduce((a,b)=>a+b,0); return total>0?Math.round(val/total*100)+'%':''; }, color:'#fff', font:{weight:'bold',size:11} }
+    }
+  };
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const R=F;
+  const usd = R.reduce((s,r)=>s+r.usd,0);
+  const rmb = R.reduce((s,r)=>s+r.rmb,0);
+  const newC= R.filter(r=>r.custType&&r.custType.includes('新')).length;
+  const onlineUSD = R.filter(r=>r.channel&&r.channel.includes('线上')).reduce((s,r)=>s+r.usd,0);
+  const retUSD    = R.filter(r=>r.custType&&r.custType.includes('老')).reduce((s,r)=>s+r.usd,0);
+  const usdOrds   = R.filter(r=>r.usd>0);
+  set('k-usd',     '$'+fmt(usd));
+  set('k-usd-sub', fmt(usdOrds.length)+' '+t('usdOrders'));
+  set('k-rmb',     '¥'+fmt(rmb));
+  set('k-rmb-sub', fmt(R.filter(r=>r.rmb>0).length)+' '+t('rmbOrders'));
+  set('k-orders',  fmt(R.length));
+  set('k-orders-sub', [...new Set(R.map(r=>r.month))].length+' '+t('activeMonths'));
+  set('k-new',     fmt(newC));
+  set('k-new-sub', R.length?Math.round(newC/R.length*100)+'% '+t('ofTotal'):'');
+  set('k-countries', [...new Set(R.map(r=>r.country).filter(Boolean))].length);
+  set('k-countries-sub', t('uniqueMarkets'));
+  set('k-avg', usdOrds.length?'$'+fmt(usd/usdOrds.length):'—');
+  set('k-avg-sub', t('perUSD'));
+  set('k-online',  usd>0?Math.round(onlineUSD/usd*100)+'%':'—');
+  set('k-online-sub', '$'+fmt(onlineUSD)+' USD');
+  set('k-ret',     usd>0?Math.round(retUSD/usd*100)+'%':'—');
+  set('k-ret-sub', t('retRevenue'));
+}
+function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+
+// ── Current Month Analysis ────────────────────────────────────────────────────
+function renderCurrentMonthAnalysis() {
+  const months = allMonths();
+  const month = months[months.length - 1];
+  const prev = prevMonth(month);
+  set('currentMonthLabel', month ? `${displayMonth(month)} · ${t('latestDataMonth')}` : t('noData'));
+
+  if (!month) {
+    document.getElementById('currentMonthTop5').innerHTML = `<div style="color:var(--muted);font-size:13px">${t('noData')}</div>`;
+    set('currentChampionName', '—'); set('currentChampionValue', ''); set('currentChampionOrders', '');
+    set('growthStarName', '—'); set('growthStarValue', ''); set('growthStarDelta', '');
+    return;
+  }
+
+  const current = salespersonMonthStats(month);
+  const previous = salespersonMonthStats(prev);
+  const ranked = Object.values(current).sort((a,b)=>b.usd-a.usd || b.orders-a.orders).slice(0,5);
+  const max = ranked[0]?.usd || 1;
+
+  document.getElementById('currentMonthTop5').innerHTML = ranked.length ? ranked.map((d,i)=>`
+    <div class="prog-row">
+      <div class="prog-lbl" title="${escHtml(d.name)}">${i+1}. ${escHtml(d.name)}</div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(3, d.usd/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+      <div class="prog-val">$${fmt(d.usd)}</div>
+    </div>
+  `).join('') : `<div style="color:var(--muted);font-size:13px">${t('noData')}</div>`;
+
+  const champion = ranked[0];
+  if (champion) {
+    set('currentChampionName', champion.name);
+    set('currentChampionValue', `$${fmt(champion.usd)} · ${champion.orders} ${t('ordersUnit')}`);
+    set('currentChampionOrders', `${displayMonth(month)}`);
+  } else {
+    set('currentChampionName', '—'); set('currentChampionValue', ''); set('currentChampionOrders', '');
+  }
+
+  let growth = Object.values(current).map(d=>{
+    const old = previous[d.name]?.usd || 0;
+    const delta = d.usd - old;
+    const pct = old > 0 ? delta / old * 100 : null;
+    return { ...d, old, delta, pct };
+  }).filter(d=>d.delta > 0 && d.pct != null).sort((a,b)=>b.pct-a.pct || b.delta-a.delta)[0];
+  if (!growth) {
+    growth = Object.values(current).map(d=>{
+      const old = previous[d.name]?.usd || 0;
+      const delta = d.usd - old;
+      return { ...d, old, delta, pct: null };
+    }).filter(d=>d.delta > 0).sort((a,b)=>b.delta-a.delta)[0];
+  }
+
+  if (growth) {
+    set('growthStarName', growth.name);
+    set('growthStarValue', `$${fmt(growth.usd)} · +$${fmt(growth.delta)}`);
+    set('growthStarDelta', growth.pct == null ? t('newThisMonth') : `+${Math.round(growth.pct)}% ${t('mom')}`);
+  } else {
+    set('growthStarName', '—');
+    set('growthStarValue', t('noPositiveGrowth'));
+    set('growthStarDelta', prev ? displayMonth(prev) : '');
+  }
+}
+
+function salespersonMonthStats(month) {
+  const map = {};
+  if (!month) return map;
+  F.filter(r=>r.month===month && r.salesperson).forEach(r=>{
+    if(!map[r.salesperson]) map[r.salesperson] = { name:r.salesperson, usd:0, rmb:0, orders:0 };
+    map[r.salesperson].usd += Number(r.usd) || 0;
+    map[r.salesperson].rmb += Number(r.rmb) || 0;
+    map[r.salesperson].orders++;
+  });
+  return map;
+}
+
+function prevMonth(month) {
+  if (!month) return null;
+  const [year, mo] = month.split('-').map(Number);
+  const d = new Date(Date.UTC(year, mo - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+}
+
+function displayMonth(month) {
+  if (!month) return '';
+  const [year, mo] = month.split('-');
+  return LANG === 'zh' ? `${year}年${Number(mo)}月` : monthLabel(month);
+}
+
+// ── Trend ────────────────────────────────────────────────────────────────────
+function setMode(mode, el, chartId) {
+  trendMode[chartId] = mode;
+  el.closest('.tab-bar').querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));
+  el.classList.add('active');
+  if(chartId==='chartTrend') renderTrend();
+  else if(chartId==='chartQtrRev') renderQtrRev();
+  else if(chartId==='chartSpRev') renderSpRevChart();
+  else if(chartId==='chartSource') renderSource();
+  else if(chartId==='chartCumulative') renderCumulative();
+  else if(chartId==='chartCnTop') renderCnTop();
+  else if(chartId==='chartRegionPie') renderRegionAnalysis();
+}
+
+function renderTrend() {
+  const months = allMonths();
+  const mode   = trendMode['chartTrend']||'usd';
+  const map    = {};
+  F.forEach(r=>{ if(!r.month)return; if(!map[r.month])map[r.month]={usd:0,rmb:0,orders:0}; map[r.month].usd+=r.usd; map[r.month].rmb+=r.rmb; map[r.month].orders++; });
+  const vals   = months.map(m=>mode==='orders'?map[m]?.orders||0:mode==='rmb'?map[m]?.rmb||0:map[m]?.usd||0);
+  const pfx    = mode==='orders'?'':mode==='rmb'?'¥':'$';
+  const lbl    = mode==='orders'?t('tabOrders'):mode==='rmb'?t('tabRMB'):t('tabUSD');
+  dc('chartTrend');
+  const ctx = document.getElementById('chartTrend').getContext('2d');
+  CI.chartTrend = new Chart(ctx, {
+    data:{
+      labels: months.map(monthLabel),
+      datasets:[
+        { type:'bar', label: lbl,
+          data:vals, backgroundColor:'rgba(88,166,255,0.2)', borderColor:'#58a6ff', borderWidth:2, borderRadius:4, datalabels:{display:false} },
+        { type:'line', label: lbl, data:vals, borderColor:'#58a6ff', backgroundColor:'transparent',
+          borderWidth:2, pointRadius:3, pointBackgroundColor:'#58a6ff', tension:0.4, datalabels:{display:false} },
+        { type:'line', label: LANG==='zh'?'3个月移动平均':'3-Mo SMA', data:vals.map((v,i)=>i>=2?Math.round((vals[i]+vals[i-1]+vals[i-2])/3):null),
+          borderColor:'#f78166', backgroundColor:'transparent', borderDash:[5,5], borderWidth:2, pointRadius:0, tension:0.4, datalabels:{display:false} }
+      ]
+    },
+    options: darkOpts({yPfx:pfx})
+  });
+}
+
+// ── YoY ──────────────────────────────────────────────────────────────────────
+function renderYoY() {
+  const yrs = [2024,2025,2026]; const yc = ['#58a6ff','#3fb950','#ffa657'];
+  const map = {};
+  F.forEach(r=>{ if(!r.month)return; map[r.month]=(map[r.month]||0)+r.usd; });
+  dc('chartYoY');
+  const ctx = document.getElementById('chartYoY').getContext('2d');
+  CI.chartYoY = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      datasets: yrs.map((yr,i)=>({
+        label: String(yr),
+        data: Array.from({length:12},(_,m)=>{
+          const k=yr+'-'+(String(m+1).padStart(2,'0'));
+          return map[k]||null;
+        }),
+        borderColor:yc[i], backgroundColor:yc[i]+'33', borderWidth:2,
+        tension:0.4, pointRadius:3, fill:false, spanGaps:true, datalabels:{display:false}
+      }))
+    },
+    options: { ...darkOpts({yPfx:'$',spanGaps:true}) }
+  });
+}
+
+// ── Country bars (overview) ───────────────────────────────────────────────────
+function renderCountryBars() {
+  const map = {};
+  F.forEach(r=>{ if(r.country&&r.usd>0) map[r.country]=(map[r.country]||0)+r.usd; });
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const max = sorted[0]?.[1]||1;
+  document.getElementById('countryBars').innerHTML = sorted.map(([cn,val],i)=>
+    `<div class="prog-row">
+      <div class="prog-lbl" title="${cn}">${cn}</div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${(val/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+      <div class="prog-val">$${fmt(val)}</div>
+    </div>`
+  ).join('');
+}
+
+// ── Donuts ───────────────────────────────────────────────────────────────────
+function renderCustTypeDonut() {
+  const nw = F.filter(r=>r.custType&&r.custType.includes('新')).length;
+  const ol = F.filter(r=>r.custType&&r.custType.includes('老')).length;
+  dc('chartCustType');
+  CI.chartCustType = new Chart(document.getElementById('chartCustType'),{
+    type:'doughnut',
+    data:{ labels:[t('newCustomer'),t('returning')], datasets:[{ data:[nw,ol], backgroundColor:['#58a6ff','#d2a8ff'], borderWidth:0, datalabels:{color:'#fff',font:{weight:'bold',size:11}} }] },
+    options: donutOpts()
+  });
+}
+function renderChannelDonut() {
+  const on = F.filter(r=>r.channel&&r.channel.includes('线上')).length;
+  const of = F.filter(r=>r.channel&&r.channel.includes('线下')).length;
+  dc('chartChannel');
+  CI.chartChannel = new Chart(document.getElementById('chartChannel'),{
+    type:'doughnut',
+    data:{ labels:[t('online'),t('offline')], datasets:[{ data:[on,of], backgroundColor:['#3fb950','#ffa657'], borderWidth:0, datalabels:{color:'#fff',font:{weight:'bold',size:11}} }] },
+    options: donutOpts()
+  });
+}
+function renderStoreDonut() {
+  const map = {};
+  F.forEach(r=>{ if(r.store&&r.usd>0) map[r.store]=(map[r.store]||0)+r.usd; });
+  const s = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  dc('chartStore');
+  CI.chartStore = new Chart(document.getElementById('chartStore'),{
+    type:'doughnut',
+    data:{ labels:s.map(e=>e[0]), datasets:[{ data:s.map(e=>e[1]), backgroundColor:C.slice(0,s.length), borderWidth:0, datalabels:{display:false} }] },
+    options: donutOpts()
+  });
+}
+
+// ── Customer Trend (stacked bar) ─────────────────────────────────────────────
+function renderCustTrend() {
+  const months = allMonths();
+  const newArr=[], oldArr=[];
+  months.forEach(m=>{
+    const sub = F.filter(r=>r.month===m);
+    newArr.push(sub.filter(r=>r.custType&&r.custType.includes('新')).length);
+    oldArr.push(sub.filter(r=>r.custType&&r.custType.includes('老')).length);
+  });
+  dc('chartCustTrend');
+  const opts = darkOpts({});
+  opts.scales.x.stacked = true; opts.scales.y.stacked = true;
+  CI.chartCustTrend = new Chart(document.getElementById('chartCustTrend'),{
+    type:'bar',
+    data:{ labels:months.map(monthLabel), datasets:[
+      { label:t('custTrendNew'), data:newArr, backgroundColor:'rgba(88,166,255,0.8)', borderRadius:2, datalabels:{display:false} },
+      { label:t('custTrendRet'), data:oldArr, backgroundColor:'rgba(210,168,255,0.8)', borderRadius:2, datalabels:{display:false} }
+    ]},
+    options: opts
+  });
+}
+
+// ── Deal Size Scatter ────────────────────────────────────────────────────────
+function renderDealScatter() {
+  const months = allMonths();
+  const newPts = [];
+  const retPts = [];
+  
+  F.filter(r=>r.usd>0 && r.month).forEach(r => {
+    const xBase = months.indexOf(r.month);
+    if (xBase === -1) return;
+    const isNew = r.custType && r.custType.includes('新');
+    
+    let dayRatio = 0.5;
+    if (r.date) {
+      const day = parseInt(r.date.split('-')[2]);
+      dayRatio = day / 31;
+    } else {
+      dayRatio = Math.random();
+    }
+    const xVal = xBase + dayRatio - 0.5;
+    
+    const pt = { x: xVal, y: r.usd, raw: r };
+    if (isNew) newPts.push(pt);
+    else retPts.push(pt);
+  });
+
+  dc('chartDealScatter');
+  const ctx = document.getElementById('chartDealScatter').getContext('2d');
+  const opts = darkOpts({yPfx:'$'});
+  opts.scales.x = { 
+    type: 'linear', min: -0.5, max: months.length - 0.5, grid: {color: tc('--chart-grid')},
+    ticks: { color: tc('--chart-text'), font: {size: 11}, callback: val => { const m = months[Math.round(val)]; return m ? monthLabel(m) : ''; } }
+  };
+  opts.plugins.tooltip.callbacks.label = ctx => {
+    const r = ctx.raw.raw;
+    return ` $${fmt(r.usd)} - ${r.salesperson} - ${r.country} (${r.date})`;
+  };
+
+  CI.chartDealScatter = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: LANG==='zh'?'新客户':'New Customer', data: newPts, backgroundColor: 'rgba(88,166,255,0.7)', borderColor: '#58a6ff', pointRadius: 4, datalabels:{display:false} },
+        { label: LANG==='zh'?'老客户':'Returning', data: retPts, backgroundColor: 'rgba(210,168,255,0.7)', borderColor: '#d2a8ff', pointRadius: 4, datalabels:{display:false} }
+      ]
+    },
+    options: opts
+  });
+}
+
+// ── Cumulative ───────────────────────────────────────────────────────────────
+function renderCumulative() {
+  const mode = trendMode['chartCumulative'] || 'alltime';
+  dc('chartCumulative');
+  
+  if (mode === 'alltime') {
+    const months = allMonths();
+    const map = {};
+    F.forEach(r=>{ if(!r.month)return; map[r.month]=(map[r.month]||0)+r.usd; });
+    let cum=0;
+    const vals = months.map(m=>{ cum+=(map[m]||0); return cum; });
+    CI.chartCumulative = new Chart(document.getElementById('chartCumulative'),{
+      type:'line',
+      data:{ labels:months.map(monthLabel), datasets:[{
+        label:t('cumulativeUSD')||'Cumulative USD', data:vals, borderColor:'#3fb950', backgroundColor:'rgba(63,185,80,0.1)',
+        fill:true, borderWidth:2, pointRadius:2, tension:0.4, datalabels:{display:false}
+      }]},
+      options: darkOpts({yPfx:'$'})
+    });
+  } else {
+    const zh = LANG==='zh';
+    const moNames = zh
+      ? ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+      : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    
+    const yearMap = {};
+    F.forEach(r=>{
+      if(!r.year || !r.month) return;
+      const moIdx = parseInt(r.month.split('-')[1]) - 1;
+      if(!yearMap[r.year]) yearMap[r.year] = Array(12).fill(0);
+      yearMap[r.year][moIdx] += r.usd;
+    });
+    
+    const years = Object.keys(yearMap).sort();
+    const colors = ['#58a6ff', '#3fb950', '#ffa657', '#d2a8ff', '#f78166'];
+    
+    const datasets = years.map((y, i) => {
+      let maxMo = -1;
+      F.forEach(r => { if(String(r.year) === String(y) && r.month) { const m = parseInt(r.month.split('-')[1]) - 1; if(m > maxMo) maxMo = m; } });
+      let cum = 0;
+      const data = yearMap[y].map((v, idx) => {
+        if (idx > maxMo) return null;
+        cum += v;
+        return cum;
+      });
+      return {
+        label: y, data: data, borderColor: colors[i % colors.length], backgroundColor: 'transparent',
+        borderWidth: 2, pointRadius: 2, tension: 0.4, datalabels:{display:false}, spanGaps: true
+      };
+    });
+    
+    const opts = darkOpts({yPfx:'$'});
+    opts.plugins.legend.display = true;
+    opts.plugins.legend.labels = { color: tc('--chart-text'), boxWidth: 12, font: {size: 12} };
+    opts.interaction = { mode:'index', intersect:false };
+    
+    CI.chartCumulative = new Chart(document.getElementById('chartCumulative'),{
+      type:'line',
+      data: { labels: moNames, datasets: datasets },
+      options: opts
+    });
+  }
+}
+
+// ── Order Value Distribution ──────────────────────────────────────────────────
+function renderOrderDist() {
+  const buckets = [['<$500',0],['$500–2K',0],['$2K–10K',0],['$10K–50K',0],['$50K+',0]];
+  F.filter(r=>r.usd>0).forEach(r=>{
+    if(r.usd<500) buckets[0][1]++;
+    else if(r.usd<2000) buckets[1][1]++;
+    else if(r.usd<10000) buckets[2][1]++;
+    else if(r.usd<50000) buckets[3][1]++;
+    else buckets[4][1]++;
+  });
+  dc('chartOrderDist');
+  const opts = darkOpts({});
+  opts.plugins.legend.display = false;
+  opts.plugins.datalabels = { anchor:'end', align:'top', color:tc('--chart-text'), font:{size:11}, formatter:val=>val };
+  CI.chartOrderDist = new Chart(document.getElementById('chartOrderDist'),{
+    type:'bar',
+    data:{ labels:buckets.map(b=>b[0]), datasets:[{
+      label:'Orders', data:buckets.map(b=>b[1]),
+      backgroundColor:['#58a6ff','#3fb950','#ffa657','#d2a8ff','#f78166'], borderRadius:5
+    }]},
+    options: opts
+  });
+}
+
+// ── Pareto ───────────────────────────────────────────────────────────────────
+function renderPareto() {
+  const orders = F.filter(r=>r.usd>0).map(r=>r.usd).sort((a,b)=>b-a);
+  const total  = orders.reduce((s,v)=>s+v,0);
+  if(!total){ dc('chartPareto'); return; }
+  // sample every N for performance
+  const step = Math.max(1, Math.floor(orders.length/40));
+  const pts  = [];
+  let cum=0;
+  orders.forEach((v,i)=>{ cum+=v; if(i%step===0||i===orders.length-1) pts.push({x:+((i+1)/orders.length*100).toFixed(1), y:+(cum/total*100).toFixed(1)}); });
+  dc('chartPareto');
+  const xLabel = LANG==='zh'?'订单占比（从大到小）':'% of orders (high→low)';
+  const yLabel = LANG==='zh'?'累计营收占比':'% of total USD revenue';
+  CI.chartPareto = new Chart(document.getElementById('chartPareto'),{
+    type:'line',
+    data:{ datasets:[
+      { label: LANG==='zh'?'营收集中度':'Revenue concentration', data:pts, borderColor:'#58a6ff', backgroundColor:'rgba(88,166,255,0.1)', fill:true, borderWidth:2, pointRadius:0, tension:0.1, datalabels:{display:false} },
+      { label: LANG==='zh'?'80%营收线':'80% revenue line', data:[{x:0,y:80},{x:100,y:80}], borderColor:'#f78166', borderDash:[5,5], borderWidth:1, pointRadius:0, fill:false, datalabels:{display:false} }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, parsing:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body') },
+        datalabels:{ display:false }
+      },
+      scales:{
+        x:{ type:'linear', min:0, max:100, grid:{color:tc('--chart-grid')},
+          ticks:{ color:tc('--chart-text'), font:{size:11}, callback:v=>v+'%' },
+          title:{ display:true, text:xLabel, color:tc('--chart-text'), font:{size:11} }
+        },
+        y:{ min:0, max:100, grid:{color:tc('--chart-grid')},
+          ticks:{ color:tc('--chart-text'), font:{size:11}, callback:v=>v+'%' },
+          title:{ display:true, text:yLabel, color:tc('--chart-text'), font:{size:11} }
+        }
+      }
+    }
+  });
+}
+
+// ── Lead Source ───────────────────────────────────────────────────────────────
+function renderSource() {
+  const mode = trendMode['chartSource'] || 'orders';
+  const map = {};
+  F.forEach(r=>{
+    const src = r.source&&r.source.trim() ? r.source.trim() : r.operator&&r.operator.trim() ? r.operator.trim() : '(Direct/Unknown)';
+    const zh = LANG==='zh';
+    const key = src==='自主开发'||src==='站外自主开发客户' ? (zh?'自主开发':'Self-Developed') :
+                src.includes('KBC')||src.includes('展会') ? (zh?'展会/KBC':'Trade Show / KBC') :
+                src.includes('阿里') ? (zh?'阿里巴巴国际站':'Alibaba Int\'l') :
+                src.includes('广交') ? (zh?'广交会':'Canton Fair') :
+                src.includes('迪拜') ? (zh?'迪拜展会':'Dubai Expo') :
+                src==='薛静'||src==='张亚莉'||src==='刘畅' ? (zh?'内部运营':'In-house Ops') :
+                src==='中国制造' ? (zh?'中国制造':'Made-in-China') :
+                src==='(Direct/Unknown)' ? (zh?'直接/未知':'Direct / Unknown') : src;
+    if(!map[key]) map[key] = {orders:0, usd:0};
+    map[key].orders++;
+    map[key].usd += r.usd;
+  });
+  const s = Object.entries(map).map(([k, d]) => ({ k, val: mode==='aov' ? (d.orders>0 ? Math.round(d.usd/d.orders) : 0) : d.orders })).sort((a,b)=>b.val-a.val);
+  dc('chartSource');
+  const opts = darkOpts({indexAxis:'y', yPfx: mode==='aov'?'$':''});
+  opts.plugins.legend.display=false;
+  CI.chartSource = new Chart(document.getElementById('chartSource'),{
+    type:'bar',
+    data:{ labels:s.map(e=>e.k), datasets:[{
+      label:mode==='aov'?t('tabAOV'):t('tabOrders'), data:s.map(e=>e.val), backgroundColor:C.slice(0,s.length), borderRadius:4, datalabels:{display:false}
+    }]},
+    options:opts
+  });
+}
+
+// ── Avg Order Trend ───────────────────────────────────────────────────────────
+function renderAvgOrder() {
+  const months = allMonths();
+  const map={};
+  F.filter(r=>r.usd>0).forEach(r=>{ if(!r.month)return; if(!map[r.month])map[r.month]={sum:0,cnt:0}; map[r.month].sum+=r.usd; map[r.month].cnt++; });
+  const vals = months.map(m=>map[m]?+(map[m].sum/map[m].cnt).toFixed(0):null);
+  dc('chartAvgOrder');
+  CI.chartAvgOrder = new Chart(document.getElementById('chartAvgOrder'),{
+    type:'line',
+    data:{ labels:months.map(monthLabel), datasets:[{
+      label:t('avgOrder'), data:vals, borderColor:'#e3b341', backgroundColor:'rgba(227,179,65,0.1)',
+      fill:true, borderWidth:2, pointRadius:3, tension:0.4, spanGaps:true, datalabels:{display:false}
+    }]},
+    options: darkOpts({yPfx:'$',spanGaps:true})
+  });
+}
+
+// ── Salesperson Table ─────────────────────────────────────────────────────────
+let spData = [];
+function renderSpTable() {
+  const map={};
+  F.forEach(r=>{
+    const s=r.salesperson; if(!s)return;
+    if(!map[s]) map[s]={name:s,orders:0,usd:0,rmb:0,newC:0,countries:new Set(),months:new Set()};
+    const d=map[s]; d.orders++; d.usd+=r.usd; d.rmb+=r.rmb;
+    if(r.custType&&r.custType.includes('新')) d.newC++;
+    if(r.country) d.countries.add(r.country);
+    if(r.month) d.months.add(r.month);
+  });
+  spData = Object.values(map).map(d=>({
+    ...d, countries:d.countries.size, months:d.months.size,
+    avg: d.orders>0?d.usd/d.orders:0,
+    newPct: d.orders>0?Math.round(d.newC/d.orders*100):0,
+    ordPerMonth: d.months.size>0?+(d.orders/d.months.size).toFixed(1):0
+  }));
+  drawSpTable();
+}
+function drawSpTable() {
+  if(!spData.length) return;
+  const sortKey = spCols[spSortCol];
+  spData.sort((a,b)=> spSortDir * (typeof a[sortKey]==='number' ? a[sortKey]-b[sortKey] : (a[sortKey]||'').localeCompare(b[sortKey]||'')) );
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('spTableBody').innerHTML = spData.map((d,i)=>`
+    <tr>
+      <td>${medals[i]||i+1}</td>
+      <td><b>${d.name}</b></td>
+      <td>${fmt(d.orders)}</td>
+      <td style="color:var(--accent)"><b>$${fmt(d.usd)}</b></td>
+      <td style="color:var(--g4)">¥${fmt(d.rmb)}</td>
+      <td>$${fmt(d.avg)}</td>
+      <td><span class="badge ${d.newPct>=50?'b-new':'b-old'}">${d.newPct}%</span></td>
+      <td>${d.countries}</td>
+      <td>${d.months}</td>
+      <td>${d.ordPerMonth}</td>
+    </tr>`).join('');
+  // update table headers language + sort indicators
+  const spHds = document.querySelectorAll('#spTable thead th');
+  const spHdKeys=['colRank','colName','colOrders','colUSD','colRMB','colAvg','colNewPct','colCountries','colMonths','colOpm'];
+  spHds.forEach((th,i)=>{
+    th.classList.remove('sort-asc','sort-desc');
+    th.textContent = t(spHdKeys[i]) || th.textContent.replace(/[▲▼]/g,'').trim();
+    if(i===spSortCol) th.classList.add(spSortDir===1?'sort-asc':'sort-desc');
+  });
+}
+const spCols = [null,'name','orders','usd','rmb','avg','newPct','countries','months','ordPerMonth'];
+function sortSpTable(col) {
+  if(col===0)return;
+  spSortDir = (spSortCol===col)?-spSortDir:-1; spSortCol=col; drawSpTable();
+}
+
+// ── Salesperson Rev Chart ─────────────────────────────────────────────────────
+function renderSpRevChart() {
+  const mode = trendMode['chartSpRev']||'usd';
+  const map={};
+  F.forEach(r=>{ if(!r.salesperson)return;
+    if(!map[r.salesperson]) map[r.salesperson]={usd:0,orders:0,newC:0,total:0};
+    map[r.salesperson].usd+=r.usd; map[r.salesperson].orders++;
+    if(r.custType&&r.custType.includes('新')) map[r.salesperson].newC++;
+    map[r.salesperson].total++;
+  });
+  // compute display values first, then sort by them
+  const entries = Object.entries(map).map(([name, d])=>({
+    name,
+    val: mode==='newpct' ? (d.total>0 ? Math.round(d.newC/d.total*100) : 0)
+       : mode==='orders' ? d.orders
+       : d.usd
+  }));
+  entries.sort((a,b)=>b.val-a.val);
+  const labels = entries.map(e=>e.name);
+  const vals   = entries.map(e=>e.val);
+  const pfx    = mode==='usd'?'$':mode==='newpct'?'':'' ;
+  dc('chartSpRev');
+  CI.chartSpRev = new Chart(document.getElementById('chartSpRev'),{
+    type:'bar',
+    data:{ labels, datasets:[{ label: mode==='usd'?t('colUSD'):mode==='orders'?t('tabOrders'):t('tabNewPct'),
+      data:vals, backgroundColor:C.slice(0,labels.length), borderRadius:4, datalabels:{display:false} }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body'),
+          callbacks:{ label:ctx=>{ const raw=ctx.parsed.x; return ' '+ctx.dataset.label+': '+pfx+fmt(raw)+(mode==='newpct'?'%':''); } }
+        },
+        datalabels:{ display:false }
+      },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11},
+          callback: val=>(pfx+(val>=1e6?(val/1e6).toFixed(1)+'M':val>=1000?(val/1000).toFixed(0)+'K':val)+(mode==='newpct'?'%':''))
+        }},
+        y:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} }
+      }
+    }
+  });
+}
+
+// ── Salesperson Countries ─────────────────────────────────────────────────────
+function renderSpCountries() {
+  const map={};
+  F.forEach(r=>{ if(!r.salesperson)return; if(!map[r.salesperson]) map[r.salesperson]=new Set(); if(r.country) map[r.salesperson].add(r.country); });
+  const s=Object.entries(map).map(([k,sv])=>([k,sv.size])).sort((a,b)=>b[1]-a[1]);
+  dc('chartSpCountries');
+  CI.chartSpCountries = new Chart(document.getElementById('chartSpCountries'),{
+    type:'bar',
+    data:{ labels:s.map(e=>e[0]), datasets:[{
+      label: LANG==='zh'?'覆盖国家':'Countries',
+      data:s.map(e=>e[1]),
+      backgroundColor:C.slice(0,s.length),
+      borderRadius:4,
+      datalabels:{ anchor:'end', align:'top', color:tc('--chart-text'), font:{size:10}, formatter:val=>val }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body') },
+        datalabels:{}  // enable per-dataset config
+      },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} },
+        y:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} }
+      }
+    }
+  });
+}
+
+// ── Seasonality ──────────────────────────────────────────────────────────────
+function renderSeason() {
+  const moNames = LANG==='zh'
+    ? ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const byMo = {};
+  F.forEach(r=>{
+    if(!r.month) return;
+    const mo = +r.month.split('-')[1];
+    if(!byMo[mo]) byMo[mo]={sum:0, years:new Set()};
+    byMo[mo].sum += r.usd;
+    byMo[mo].years.add(r.year);
+  });
+  const vals = Array.from({length:12},(_,i)=>{
+    const d = byMo[i+1];
+    return d && d.years.size>0 ? Math.round(d.sum/d.years.size) : 0;
+  });
+  const max = Math.max(...vals);
+  const bgColors = vals.map(v=>{ const ratio=v/max; return ratio>0.8?'rgba(63,185,80,0.7)':ratio>0.5?'rgba(88,166,255,0.7)':'rgba(139,148,158,0.5)'; });
+  dc('chartSeason');
+  const opts = darkOpts({yPfx:'$'});
+  opts.plugins.legend.display = false;
+  opts.plugins.datalabels = { anchor:'end', align:'top', color:tc('--chart-text'), font:{size:10}, formatter:val=>'$'+(val>=1000?(val/1000).toFixed(0)+'K':val) };
+  CI.chartSeason = new Chart(document.getElementById('chartSeason'),{
+    type:'bar',
+    data:{ labels:moNames, datasets:[{ label:LANG==='zh'?'月均营收':'Avg Revenue', data:vals, backgroundColor:bgColors, borderRadius:4 }] },
+    options:opts
+  });
+}
+
+// ── Day of Week ──────────────────────────────────────────────────────────────
+function renderDow() {
+  const dayNames = LANG==='zh'
+    ? ['周日','周一','周二','周三','周四','周五','周六']
+    : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dow = Array(7).fill(0);
+  F.forEach(r=>{
+    if(!r.date) return;
+    const d = new Date(r.date).getDay();
+    dow[d] += r.usd;
+  });
+  const bgColors = ['#8b949e','#58a6ff','#3fb950','#d2a8ff','#ffa657','#f78166','#8b949e'];
+  dc('chartDow');
+  const opts = darkOpts({yPfx:'$'});
+  opts.plugins.legend.display = false;
+  CI.chartDow = new Chart(document.getElementById('chartDow'),{
+    type:'bar',
+    data:{ labels:dayNames, datasets:[{ label:'USD', data:dow, backgroundColor:bgColors.map(c=>c+'99'), borderColor:bgColors, borderWidth:1, borderRadius:4, datalabels:{display:false} }] },
+    options:opts
+  });
+}
+
+// ── Big Orders ───────────────────────────────────────────────────────────────
+function renderBigOrders() {
+  const top20 = [...F].filter(r=>r.usd>0).sort((a,b)=>b.usd-a.usd).slice(0,20);
+  document.getElementById('bigOrdersBody').innerHTML = top20.map((r,i)=>`<tr>
+    <td style="color:var(--muted)">${i<3?['🥇','🥈','🥉'][i]:i+1}</td>
+    <td style="color:var(--muted)">${r.date}</td>
+    <td>${r.salesperson}</td>
+    <td>${r.country}</td>
+    <td style="color:var(--accent);font-weight:700">$${fmt(r.usd,2)}</td>
+    <td><span class="badge ${r.custType&&r.custType.includes('新')?'b-new':'b-old'}">${r.custType&&r.custType.includes('新')?t('badgeNew'):t('badgeReturn')}</span></td>
+    <td><span class="badge ${r.channel&&r.channel.includes('线上')?'b-on':'b-off'}">${r.channel&&r.channel.includes('线上')?t('badgeOnline'):t('badgeOffline')}</span></td>
+    <td style="color:var(--muted)">${r.store}</td>
+  </tr>`).join('');
+}
+
+// ── Salesperson Monthly Trend ─────────────────────────────────────────────────
+function renderSpTrend() {
+  const months = allMonths();
+  if(!months.length) { dc('chartSpTrend'); return; }
+  // get top SPs by total USD for readability
+  const spTot = {};
+  F.forEach(r=>{ if(r.salesperson) spTot[r.salesperson]=(spTot[r.salesperson]||0)+r.usd; });
+  const topSps = Object.entries(spTot).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>e[0]);
+  // build monthly data per SP
+  const spMonthly = {};
+  F.forEach(r=>{
+    if(!r.salesperson || !r.month) return;
+    if(!topSps.includes(r.salesperson)) return;
+    if(!spMonthly[r.salesperson]) spMonthly[r.salesperson]={};
+    spMonthly[r.salesperson][r.month] = (spMonthly[r.salesperson][r.month]||0) + r.usd;
+  });
+  dc('chartSpTrend');
+  CI.chartSpTrend = new Chart(document.getElementById('chartSpTrend'),{
+    type:'line',
+    data:{
+      labels: months.map(monthLabel),
+      datasets: topSps.map((sp,i)=>({
+        label: sp,
+        data: months.map(m=>spMonthly[sp]?.[m]||0),
+        borderColor: C[i%C.length],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 2,
+        tension: 0.4,
+        datalabels:{ display:false }
+      }))
+    },
+    options: darkOpts({yPfx:'$', spanGaps:true})
+  });
+}
+
+// ── Salesperson Win Rate Trend ────────────────────────────────────────────────
+function renderWinRate() {
+  const months = allMonths();
+  if(!months.length) { dc('chartWinRate'); return; }
+  const spTot = {};
+  F.forEach(r=>{ if(r.salesperson) spTot[r.salesperson]=(spTot[r.salesperson]||0)+r.usd; });
+  const topSps = Object.entries(spTot).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
+  // monthly new% per SP
+  const spM = {};
+  F.forEach(r=>{
+    if(!r.salesperson||!r.month||!topSps.includes(r.salesperson)) return;
+    const k = r.salesperson+'|'+r.month;
+    if(!spM[k]) spM[k]={total:0,newC:0};
+    spM[k].total++;
+    if(r.custType&&r.custType.includes('新')) spM[k].newC++;
+  });
+  dc('chartWinRate');
+  CI.chartWinRate = new Chart(document.getElementById('chartWinRate'),{
+    type:'line',
+    data:{
+      labels: months.map(monthLabel),
+      datasets: topSps.map((sp,i)=>({
+        label: sp,
+        data: months.map(m=>{
+          const d = spM[sp+'|'+m];
+          return d && d.total>=2 ? Math.round(d.newC/d.total*100) : null;
+        }),
+        borderColor: C[i%C.length],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.4,
+        spanGaps: true,
+        datalabels:{ display:false }
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, spanGaps:true,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ labels:{color:tc('--chart-text'),boxWidth:12,font:{size:12}} },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body'),
+          callbacks:{ label:ctx=>{ const raw=ctx.parsed.y; return raw!=null?' '+ctx.dataset.label+': '+raw+'%':null; } }
+        },
+        datalabels:{ display:false }
+      },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} },
+        y:{ grid:{color:tc('--chart-grid')}, min:0, max:100, ticks:{color:tc('--chart-text'),font:{size:11}, callback:val=>val+'%'} }
+      }
+    }
+  });
+}
+
+// ── Store vs Channel Matrix ───────────────────────────────────────────────────
+function renderStoreChannel() {
+  const map = {};
+  F.forEach(r => {
+    if (!r.store) return;
+    if (!map[r.store]) map[r.store] = { on: 0, off: 0, total: 0 };
+    if (r.channel && r.channel.includes('线上')) map[r.store].on += r.usd;
+    else map[r.store].off += r.usd;
+    map[r.store].total += r.usd;
+  });
+  const sorted = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  dc('chartStoreChannel');
+  const opts = darkOpts({yPfx:'$'});
+  opts.scales.x.stacked = true;
+  opts.scales.y.stacked = true;
+  CI.chartStoreChannel = new Chart(document.getElementById('chartStoreChannel'),{
+    type: 'bar',
+    data: {
+      labels: sorted.map(e=>e[0]),
+      datasets: [
+        { label: LANG==='zh'?'线上':'Online', data: sorted.map(e=>e[1].on), backgroundColor: 'rgba(63,185,80,0.8)', borderRadius: 2, datalabels:{display:false} },
+        { label: LANG==='zh'?'线下':'Offline', data: sorted.map(e=>e[1].off), backgroundColor: 'rgba(255,166,87,0.8)', borderRadius: 2, datalabels:{display:false} }
+      ]
+    },
+    options: opts
+  });
+}
+
+// ── Country YoY Growth ───────────────────────────────────────────────────────
+let cnYoyPeriod = '2024-2025';
+function setCnYoyPeriod(period, el) {
+  cnYoyPeriod = period;
+  el.closest('.tab-bar').querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));
+  el.classList.add('active');
+  renderCnYoy();
+}
+function renderCnYoy() {
+  const [y1,y2] = cnYoyPeriod.split('-').map(Number);
+  const map = {};
+  F.forEach(r=>{
+    if(!r.country || (r.year!==y1 && r.year!==y2)) return;
+    if(!map[r.country]) map[r.country]={prev:0,cur:0};
+    if(r.year===y1) map[r.country].prev += r.usd;
+    else map[r.country].cur += r.usd;
+  });
+  // only countries active in both years
+  const both = Object.entries(map)
+    .filter(([c,d])=>d.prev>500 && d.cur>500) // minimum threshold
+    .map(([c,d])=>({ c, prev:d.prev, cur:d.cur, pct:Math.round((d.cur-d.prev)/d.prev*100) }))
+    .sort((a,b)=>b.pct-a.pct);
+  const labels = both.map(e=>e.c);
+  const pcts   = both.map(e=>e.pct);
+  const colors = pcts.map(p=>p>=0?'rgba(63,185,80,0.7)':'rgba(247,129,102,0.7)');
+  dc('chartCnYoy');
+  CI.chartCnYoy = new Chart(document.getElementById('chartCnYoy'),{
+    type:'bar',
+    data:{ labels, datasets:[{
+      label: y1+'→'+y2+' Growth %',
+      data:pcts, backgroundColor:colors, borderRadius:3,
+      datalabels:{ anchor:ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'end':'start',
+        align:ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'top':'bottom',
+        color:tc('--chart-text'), font:{size:10}, formatter:val=>(val>=0?'+':'')+val+'%' }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{display:false}, tooltip:{backgroundColor:tc('--chart-tooltip-bg'),borderColor:tc('--chart-tooltip-border'),borderWidth:1,titleColor:tc('--chart-tooltip-title'),bodyColor:tc('--chart-tooltip-body')}, datalabels:{} },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}, callback:val=>val+'%'},
+          title:{display:true,text:LANG==='zh'?'营收变化%':'Revenue Change %',color:tc('--chart-text'),font:{size:11}}
+        },
+        y:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} }
+      }
+    }
+  });
+}
+
+// ── New Markets Discovery ────────────────────────────────────────────────────
+function renderNewMkt() {
+  // Use ALL data to track first appearance, regardless of filters
+  const firstYear = {};
+  ALL.forEach(r=>{ if(r.country && r.year) { if(!firstYear[r.country] || r.year<firstYear[r.country]) firstYear[r.country]=r.year; } });
+  const byYear = {};
+  Object.entries(firstYear).forEach(([c,y])=>{ byYear[y]=(byYear[y]||0)+1; });
+  const years = Object.keys(byYear).sort();
+  dc('chartNewMkt');
+  const opts = darkOpts({});
+  opts.plugins.legend.display = false;
+  opts.plugins.datalabels = { anchor:'end', align:'top', color:tc('--chart-text'), font:{size:12,weight:'bold'}, formatter:val=>val };
+  CI.chartNewMkt = new Chart(document.getElementById('chartNewMkt'),{
+    type:'bar',
+    data:{ labels:years, datasets:[{
+      label: LANG==='zh'?'新增国家':'New Countries',
+      data: years.map(y=>byYear[y]),
+      backgroundColor:['#58a6ff99','#3fb95099','#ffa65799'],
+      borderColor:['#58a6ff','#3fb950','#ffa657'],
+      borderWidth:1, borderRadius:6
+    }]},
+    options:opts
+  });
+}
+
+// ── Market Concentration ──────────────────────────────────────────────────────
+function renderMktConc() {
+  const map = {};
+  F.forEach(r=>{ if(r.country && r.usd>0) map[r.country]=(map[r.country]||0)+r.usd; });
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const total = sorted.reduce((s,e)=>s+e[1],0);
+  if(!total) { dc('chartMktConc'); return; }
+  // cumulative %
+  const tiers = [1,3,5,10,20];
+  const cumPcts = tiers.map(n=>{
+    const topN = sorted.slice(0,n).reduce((s,e)=>s+e[1],0);
+    return +(topN/total*100).toFixed(1);
+  });
+  const labels = tiers.map(n=> (LANG==='zh'?'前':'Top ')+n+(LANG==='zh'?'国家':' Countries'));
+  dc('chartMktConc');
+  CI.chartMktConc = new Chart(document.getElementById('chartMktConc'),{
+    type:'bar',
+    data:{ labels, datasets:[{
+      label: LANG==='zh'?'营收占比':'Revenue Share',
+      data:cumPcts,
+      backgroundColor:['#f7816699','#ffa65799','#e3b34199','#58a6ff99','#3fb95099'],
+      borderColor:['#f78166','#ffa657','#e3b341','#58a6ff','#3fb950'],
+      borderWidth:1, borderRadius:6,
+      datalabels:{ anchor:'end', align:'top', color:tc('--chart-text'), font:{size:11,weight:'bold'}, formatter:val=>val+'%' }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{backgroundColor:tc('--chart-tooltip-bg'),borderColor:tc('--chart-tooltip-border'),borderWidth:1,titleColor:tc('--chart-tooltip-title'),bodyColor:tc('--chart-tooltip-body')}, datalabels:{} },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} },
+        y:{ grid:{color:tc('--chart-grid')}, min:0, max:100, ticks:{color:tc('--chart-text'),font:{size:11}, callback:val=>val+'%'} }
+      }
+    }
+  });
+}
+
+// ── New Markets Detail Table ──────────────────────────────────────────────────
+function renderNewMktTable() {
+  const zh = LANG==='zh';
+  const firstYear = {};
+  ALL.forEach(r=>{ if(r.country && r.year) { if(!firstYear[r.country] || r.year<firstYear[r.country]) firstYear[r.country]=r.year; } });
+  // gather stats per new country (only 2025 and 2026 entries)
+  const newCountries = [];
+  [2025,2026].forEach(yr=>{
+    const countries = Object.entries(firstYear).filter(([c,y])=>y===yr).map(e=>e[0]);
+    countries.forEach(c=>{
+      const orders = F.filter(r=>r.country===c);
+      const usd = orders.reduce((s,r)=>s+r.usd,0);
+      const topSp = {};
+      orders.forEach(r=>{ if(r.salesperson) topSp[r.salesperson]=(topSp[r.salesperson]||0)+1; });
+      const sp = Object.entries(topSp).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+      newCountries.push({ year:yr, country:c, orders:orders.length, usd, sp });
+    });
+  });
+  newCountries.sort((a,b)=>b.usd-a.usd);
+  document.getElementById('newMktTableHead').innerHTML = `<tr>
+    <th>${zh?'首年':'First Year'}</th>
+    <th>${zh?'国家':'Country'}</th>
+    <th>${zh?'订单数':'Orders'}</th>
+    <th>${zh?'美元营收':'USD Revenue'}</th>
+    <th>${zh?'主要业务员':'Top Salesperson'}</th>
+  </tr>`;
+  document.getElementById('newMktTableBody').innerHTML = newCountries.map(d=>`<tr>
+    <td><span class="badge b-neutral">${d.year}</span></td>
+    <td><b>${d.country}</b></td>
+    <td>${d.orders}</td>
+    <td style="color:var(--accent)">$${fmt(d.usd)}</td>
+    <td style="color:var(--muted)">${d.sp}</td>
+  </tr>`).join('');
+}
+
+// ── Quarterly Helpers ─────────────────────────────────────────────────────────
+function toQuarter(month) {
+  if(!month) return null;
+  const [y, mo] = month.split('-');
+  const q = Math.ceil(+mo/3);
+  return y + '-Q' + q;
+}
+function qLabel(qk) { return qk; } // "2024-Q1"
+function allQuarters() {
+  return [...new Set(F.map(r=>toQuarter(r.month)).filter(Boolean))].sort();
+}
+function qtrAgg() {
+  const map = {};
+  F.forEach(r => {
+    const q = toQuarter(r.month); if(!q) return;
+    if(!map[q]) map[q] = {usd:0, rmb:0, orders:0, newC:0, oldC:0, onUSD:0, offUSD:0, sps:{}};
+    const d = map[q];
+    d.usd += r.usd; d.rmb += r.rmb; d.orders++;
+    if(r.custType&&r.custType.includes('新')) d.newC++; else d.oldC++;
+    if(r.channel&&r.channel.includes('线上')) d.onUSD += r.usd; else d.offUSD += r.usd;
+    if(r.salesperson) d.sps[r.salesperson] = (d.sps[r.salesperson]||0) + r.usd;
+  });
+  return map;
+}
+
+// ── Quarterly KPIs ───────────────────────────────────────────────────────────
+function renderQtrKPIs() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  const last = qtrs[qtrs.length-1];
+  const prev = qtrs[qtrs.length-2];
+  if(!last) { document.getElementById('qtrKpiGrid').innerHTML=''; return; }
+  const cur = agg[last], prv = prev ? agg[prev] : null;
+  function delta(curV, prvV) {
+    if(!prv || !prvV) return '';
+    const pct = Math.round((curV-prvV)/prvV*100);
+    const cls = pct>=0?'up':'down';
+    const arrow = pct>=0?'↑':'↓';
+    return `<div class="kpi-delta ${cls}">${arrow} ${Math.abs(pct)}% vs ${prev}</div>`;
+  }
+  const zh = LANG==='zh';
+  document.getElementById('qtrKpiGrid').innerHTML = `
+    <div class="kpi" style="--ca:var(--accent)">
+      <div class="kpi-label">${last} ${zh?'美元营收':'USD Revenue'}</div>
+      <div class="kpi-val">$${fmt(cur.usd)}</div>
+      ${delta(cur.usd, prv?.usd)}
+    </div>
+    <div class="kpi" style="--ca:var(--g4)">
+      <div class="kpi-label">${last} ${zh?'人民币营收':'RMB Revenue'}</div>
+      <div class="kpi-val">¥${fmt(cur.rmb)}</div>
+      ${delta(cur.rmb, prv?.rmb)}
+    </div>
+    <div class="kpi" style="--ca:var(--g2)">
+      <div class="kpi-label">${last} ${zh?'订单数':'Orders'}</div>
+      <div class="kpi-val">${fmt(cur.orders)}</div>
+      ${delta(cur.orders, prv?.orders)}
+    </div>
+    <div class="kpi" style="--ca:var(--g5)">
+      <div class="kpi-label">${last} ${zh?'新客占比':'New Customer %'}</div>
+      <div class="kpi-val">${cur.orders?Math.round(cur.newC/cur.orders*100):0}%</div>
+      <div class="kpi-sub">${cur.newC} ${zh?'新客户':'new'} / ${cur.orders} ${zh?'总单':'total'}</div>
+    </div>
+    <div class="kpi" style="--ca:#e3b341">
+      <div class="kpi-label">${last} ${zh?'均价（美元）':'Avg Order (USD)'}</div>
+      <div class="kpi-val">$${cur.orders?fmt(cur.usd/(F.filter(r=>toQuarter(r.month)===last&&r.usd>0).length||1)):0}</div>
+      ${delta(cur.usd/(cur.orders||1), prv?.usd/(prv?.orders||1))}
+    </div>
+  `;
+}
+
+// ── Quarterly Revenue Bar ─────────────────────────────────────────────────────
+function renderQtrRev() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  const mode = trendMode['chartQtrRev']||'usd';
+  const vals = qtrs.map(q => mode==='orders'?agg[q]?.orders||0 : mode==='rmb'?agg[q]?.rmb||0 : agg[q]?.usd||0);
+  const pfx  = mode==='orders'?'':mode==='rmb'?'¥':'$';
+  const lbl  = mode==='orders'?t('tabOrders'):mode==='rmb'?t('tabRMB'):t('tabUSD');
+  dc('chartQtrRev');
+  CI.chartQtrRev = new Chart(document.getElementById('chartQtrRev'),{
+    data:{
+      labels: qtrs.map(qLabel),
+      datasets:[
+        { type:'bar', label:lbl, data:vals,
+          backgroundColor: qtrs.map(q=>{ const yr=q.split('-')[0]; return yr==='2024'?'rgba(88,166,255,0.6)':yr==='2025'?'rgba(63,185,80,0.6)':'rgba(255,166,87,0.6)'; }),
+          borderColor: qtrs.map(q=>{ const yr=q.split('-')[0]; return yr==='2024'?'#58a6ff':yr==='2025'?'#3fb950':'#ffa657'; }),
+          borderWidth:2, borderRadius:6, datalabels:{display:false}
+        },
+        { type:'line', label:lbl+' trend', data:vals,
+          borderColor:'#d2a8ff', backgroundColor:'transparent', borderWidth:2,
+          pointRadius:4, pointBackgroundColor:'#d2a8ff', tension:0.4, datalabels:{display:false}
+        }
+      ]
+    },
+    options: darkOpts({yPfx:pfx})
+  });
+}
+
+// ── QoQ Growth ────────────────────────────────────────────────────────────────
+function renderQoQ() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  const labels = []; const vals = []; const colors = [];
+  for(let i=1; i<qtrs.length; i++) {
+    const prev = agg[qtrs[i-1]]?.usd||0;
+    const cur  = agg[qtrs[i]]?.usd||0;
+    const pct  = prev>0 ? +((cur-prev)/prev*100).toFixed(1) : 0;
+    labels.push(qtrs[i]);
+    vals.push(pct);
+    colors.push(pct>=0?'rgba(63,185,80,0.7)':'rgba(247,129,102,0.7)');
+  }
+  dc('chartQoQ');
+  CI.chartQoQ = new Chart(document.getElementById('chartQoQ'),{
+    type:'bar',
+    data:{ labels, datasets:[{
+      label: LANG==='zh'?'环比增长%':'QoQ Growth %',
+      data:vals, backgroundColor:colors, borderRadius:4,
+      datalabels:{ anchor:'end', align: ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'top':'bottom',
+        color:tc('--chart-text'), font:{size:11}, formatter:val=>val+'%' }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body') },
+        datalabels:{}
+      },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} },
+        y:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}, callback:val=>val+'%' } }
+      }
+    }
+  });
+}
+
+// ── Same-Quarter Year-over-Year ───────────────────────────────────────────────
+function renderQtrYoY() {
+  const agg  = qtrAgg();
+  const yrs  = [2024,2025,2026];
+  const yc   = ['#58a6ff','#3fb950','#ffa657'];
+  const qNums = ['Q1','Q2','Q3','Q4'];
+  dc('chartQtrYoY');
+  CI.chartQtrYoY = new Chart(document.getElementById('chartQtrYoY'),{
+    type:'bar',
+    data:{
+      labels: qNums,
+      datasets: yrs.map((yr,i)=>({
+        label: String(yr),
+        data: qNums.map(q=>{ const k=yr+'-'+q; return agg[k]?.usd||null; }),
+        backgroundColor: yc[i]+'99',
+        borderColor: yc[i],
+        borderWidth: 1,
+        borderRadius: 4,
+        datalabels:{ display:false }
+      }))
+    },
+    options: darkOpts({yPfx:'$'})
+  });
+}
+
+// ── Quarterly Customer Mix ────────────────────────────────────────────────────
+function renderQtrCust() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  dc('chartQtrCust');
+  const opts = darkOpts({});
+  opts.scales.x.stacked = true; opts.scales.y.stacked = true;
+  CI.chartQtrCust = new Chart(document.getElementById('chartQtrCust'),{
+    type:'bar',
+    data:{ labels:qtrs.map(qLabel), datasets:[
+      { label:t('custTrendNew'), data:qtrs.map(q=>agg[q]?.newC||0), backgroundColor:'rgba(88,166,255,0.8)', borderRadius:2, datalabels:{display:false} },
+      { label:t('custTrendRet'), data:qtrs.map(q=>agg[q]?.oldC||0), backgroundColor:'rgba(210,168,255,0.8)', borderRadius:2, datalabels:{display:false} }
+    ]},
+    options: opts
+  });
+}
+
+// ── Quarterly Channel Mix ─────────────────────────────────────────────────────
+function renderQtrChan() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  dc('chartQtrChan');
+  const opts = darkOpts({yPfx:'$'});
+  opts.scales.x.stacked = true; opts.scales.y.stacked = true;
+  CI.chartQtrChan = new Chart(document.getElementById('chartQtrChan'),{
+    type:'bar',
+    data:{ labels:qtrs.map(qLabel), datasets:[
+      { label:t('online'), data:qtrs.map(q=>agg[q]?.onUSD||0), backgroundColor:'rgba(63,185,80,0.8)', borderRadius:2, datalabels:{display:false} },
+      { label:t('offline'), data:qtrs.map(q=>agg[q]?.offUSD||0), backgroundColor:'rgba(255,166,87,0.8)', borderRadius:2, datalabels:{display:false} }
+    ]},
+    options: opts
+  });
+}
+
+// ── Quarterly Salesperson Stacked ─────────────────────────────────────────────
+function renderQtrSp() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  // get all salespeople sorted by total usd
+  const spTotals = {};
+  F.forEach(r=>{ if(r.salesperson) spTotals[r.salesperson]=(spTotals[r.salesperson]||0)+r.usd; });
+  const topSps = Object.entries(spTotals).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  dc('chartQtrSp');
+  const opts = darkOpts({yPfx:'$'});
+  opts.scales.x.stacked = true; opts.scales.y.stacked = true;
+  CI.chartQtrSp = new Chart(document.getElementById('chartQtrSp'),{
+    type:'bar',
+    data:{
+      labels: qtrs.map(qLabel),
+      datasets: topSps.map((sp,i)=>({
+        label: sp,
+        data: qtrs.map(q=> agg[q]?.sps[sp]||0),
+        backgroundColor: C[i%C.length]+'cc',
+        borderRadius: 1,
+        datalabels:{ display:false }
+      }))
+    },
+    options: opts
+  });
+}
+
+// ── Quarterly Summary Table ───────────────────────────────────────────────────
+function renderQtrTable() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  const zh = LANG==='zh';
+
+  document.getElementById('qtrTableHead').innerHTML = `<tr>
+    <th>${zh?'季度':'Quarter'}</th>
+    <th>${zh?'美元营收':'USD Revenue'}</th>
+    <th>${zh?'人民币营收':'RMB Revenue'}</th>
+    <th>${zh?'订单数':'Orders'}</th>
+    <th>${zh?'均价（美元）':'Avg Order (USD)'}</th>
+    <th>${zh?'新客占比':'New %'}</th>
+    <th>${zh?'线上占比':'Online %'}</th>
+    <th>${zh?'环比增长':'QoQ Growth'}</th>
+  </tr>`;
+
+  let prevUSD = null;
+  document.getElementById('qtrTableBody').innerHTML = qtrs.map(q=>{
+    const d = agg[q];
+    if(!d) return '';
+    const usdOrds = F.filter(r=>toQuarter(r.month)===q&&r.usd>0).length;
+    const avgOrd  = usdOrds>0 ? d.usd/usdOrds : 0;
+    const newPct  = d.orders>0 ? Math.round(d.newC/d.orders*100) : 0;
+    const onPct   = d.usd>0 ? Math.round(d.onUSD/d.usd*100) : 0;
+    let qoq = '—';
+    if(prevUSD!==null && prevUSD>0) {
+      const pct = Math.round((d.usd-prevUSD)/prevUSD*100);
+      qoq = `<span class="kpi-delta ${pct>=0?'up':'down'}" style="margin:0">${pct>=0?'↑':'↓'} ${Math.abs(pct)}%</span>`;
+    }
+    prevUSD = d.usd;
+    return `<tr>
+      <td><b>${q}</b></td>
+      <td style="color:var(--accent)">$${fmt(d.usd)}</td>
+      <td style="color:var(--g4)">¥${fmt(d.rmb)}</td>
+      <td>${d.orders}</td>
+      <td>$${fmt(avgOrd)}</td>
+      <td><span class="badge ${newPct>=50?'b-new':'b-old'}">${newPct}%</span></td>
+      <td><span class="badge ${onPct>=50?'b-on':'b-off'}">${onPct}%</span></td>
+      <td>${qoq}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Heatmap ──────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const months = [...new Set(ALL.map(r=>r.month).filter(Boolean))].sort(); // use ALL for full matrix
+  const salespeople = [...new Set(F.map(r=>r.salesperson).filter(Boolean))].sort();
+  const map={};
+  F.forEach(r=>{ if(!r.salesperson||!r.month)return; const k=r.salesperson+'|'+r.month; map[k]=(map[k]||0)+r.usd; });
+  // find global max for color scaling
+  const maxVal = Math.max(...Object.values(map),1);
+  function heatColor(val) {
+    if(!val) return 'background:var(--surface2);color:var(--muted)';
+    const ratio=val/maxVal;
+    const r=Math.round(88+ratio*(247-88)), g=Math.round(166+ratio*(129-166)), b=Math.round(255+ratio*(102-255));
+    const bright = ratio>0.5;
+    const isLight = getTheme()==='light';
+    return `background:rgba(${r},${g},${b},${isLight?0.15+ratio*0.55:0.2+ratio*0.75});color:${bright?(isLight?'#000':'#fff'):tc('--chart-text')}`;
+  }
+  const thead = `<tr><th>Salesperson</th>${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}</tr>`;
+  const tbody = salespeople.map(sp=>
+    `<tr><td class="sp-name">${sp}</td>${months.map(m=>{ const v=map[sp+'|'+m]||0; return `<td style="${heatColor(v)}">${v>=1000?(v/1000).toFixed(0)+'K':v?fmt(v):''}</td>`; }).join('')}</tr>`
+  ).join('');
+  document.getElementById('hmWrap').innerHTML = `<table class="hm"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+}
+
+// ── Country Table ─────────────────────────────────────────────────────────────
+let cnData=[];
+function renderCnTable() {
+  const map={};
+  F.forEach(r=>{ const c=r.country; if(!c)return;
+    if(!map[c]) map[c]={country:c,orders:0,usd:0,newC:0,onlineC:0,sps:{}};
+    const d=map[c]; d.orders++; d.usd+=r.usd;
+    if(r.custType&&r.custType.includes('新')) d.newC++;
+    if(r.channel&&r.channel.includes('线上')) d.onlineC++;
+    if(r.salesperson) d.sps[r.salesperson]=(d.sps[r.salesperson]||0)+1;
+  });
+  cnData = Object.values(map).map(d=>({
+    ...d, avg:d.orders?d.usd/d.orders:0,
+    newPct:d.orders?Math.round(d.newC/d.orders*100):0,
+    onlinePct:d.orders?Math.round(d.onlineC/d.orders*100):0,
+    topSp: Object.entries(d.sps).sort((a,b)=>b[1]-a[1])[0]?.[0]||''
+  }));
+  drawCnTable();
+}
+let cnSortColRef=3;
+function drawCnTable() {
+  const col = cnCols[cnSortCol];
+  cnData.sort((a,b)=> cnSortDir*(typeof a[col]==='number'?a[col]-b[col]:a[col]?.localeCompare(b[col])||0));
+  document.getElementById('cnTableBody').innerHTML = cnData.map((d,i)=>`
+    <tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td><b>${d.country}</b></td>
+      <td>${d.orders}</td>
+      <td style="color:var(--accent)">$${fmt(d.usd)}</td>
+      <td>$${fmt(d.avg)}</td>
+      <td><span class="badge ${d.newPct>=50?'b-new':'b-old'}">${d.newPct}%</span></td>
+      <td><span class="badge ${d.onlinePct>=50?'b-on':'b-off'}">${d.onlinePct}%</span></td>
+      <td style="color:var(--muted)">${d.topSp}</td>
+    </tr>`).join('');
+  const cnHds = document.querySelectorAll('#cnTable thead th');
+  const cnHdKeys=['cnColRank','cnColCountry','cnColOrders','cnColUSD','cnColAvg','cnColNew','cnColOnline','cnColTopSp'];
+  cnHds.forEach((th,i)=>{
+    th.classList.remove('sort-asc','sort-desc');
+    th.textContent=t(cnHdKeys[i])||th.textContent.replace(/[▲▼]/g,'').trim();
+    if(i===cnSortCol) th.classList.add(cnSortDir===1?'sort-asc':'sort-desc');
+  });
+}
+const cnCols=[null,'country','orders','usd','avg','newPct','onlinePct','topSp'];
+function sortCnTable(col) {
+  if(col===0)return;
+  cnSortDir=(cnSortCol===col)?-cnSortDir:-1; cnSortCol=col; drawCnTable();
+}
+
+// ── Country Top Bar Chart ─────────────────────────────────────────────────────
+function renderCnTop() {
+  const mode = trendMode['chartCnTop'] || 'all';
+  const map={};
+  F.forEach(r=>{ 
+    if(r.country&&r.usd>0) {
+      if(mode==='new' && !(r.custType && r.custType.includes('新'))) return;
+      map[r.country]=(map[r.country]||0)+r.usd; 
+    }
+  });
+  const s=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  dc('chartCnTop');
+  const opts=darkOpts({yPfx:'$',indexAxis:'y'});
+  opts.plugins.legend.display=false;
+  CI.chartCnTop = new Chart(document.getElementById('chartCnTop'),{
+    type:'bar',
+    data:{ labels:s.map(e=>e[0]), datasets:[{ label:LANG==='zh'?'美元营收':'USD Revenue', data:s.map(e=>e[1]), backgroundColor:C.slice(0,s.length), borderRadius:4, datalabels:{display:false} }]},
+    options:opts
+  });
+}
+
+// ── Country Order Bars ────────────────────────────────────────────────────────
+function renderCnOrderBars() {
+  const map={};
+  F.forEach(r=>{ if(r.country) map[r.country]=(map[r.country]||0)+1; });
+  const s=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const max=s[0]?.[1]||1;
+  document.getElementById('cnOrderBars').innerHTML = s.map(([cn,val],i)=>
+    `<div class="prog-row">
+      <div class="prog-lbl" title="${cn}">${cn}</div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${(val/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+      <div class="prog-val">${val} orders</div>
+    </div>`
+  ).join('');
+}
+
+// ── Regional Market Analysis ──────────────────────────────────────────────────
+function renderRegionAnalysis() {
+  const mode = trendMode['chartRegionPie'] || 'all';
+  const regions = regionStats(mode);
+  const entries = Object.values(regions).sort((a,b)=>b.usd-a.usd);
+  const labels = entries.map(d=>d.label);
+  const values = entries.map(d=>d.usd);
+  const total = values.reduce((s,v)=>s+v,0);
+  const colors = ['#58a6ff','#3fb950','#ffa657','#d2a8ff','#f78166','#79c0ff','#e3b341','#56d364','#bc8cff'];
+
+  dc('chartRegionPie');
+  CI.chartRegionPie = new Chart(document.getElementById('chartRegionPie'),{
+    type:'pie',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors.slice(0,labels.length), borderWidth:0 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:tc('--chart-text'), boxWidth:10, font:{size:11}, padding:8 } },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body'),
+          callbacks:{ label:ctx=>` ${ctx.label}: $${fmt(ctx.raw)} (${total?Math.round(ctx.raw/total*100):0}%)` }
+        },
+        datalabels:{ color:'#fff', font:{weight:'bold',size:11}, formatter:val=> total && val/total>=0.05 ? Math.round(val/total*100)+'%' : '' }
+      }
+    }
+  });
+
+  const max = entries[0]?.usd || 1;
+  document.getElementById('regionBars').innerHTML = entries.map((d,i)=>`
+    <div class="prog-row">
+      <div class="prog-lbl" title="${escHtml(d.label)}">${escHtml(d.label)}</div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(3, d.usd/max*100).toFixed(1)}%;background:${colors[i%colors.length]}"></div></div>
+      <div class="prog-val">$${fmt(d.usd)}</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:-4px 0 8px 98px">
+      ${d.orders} ${t('ordersUnit')} · ${d.countries.size} ${t('regionCountriesUnit')}
+    </div>
+  `).join('');
+}
+
+function regionStats(mode = 'all') {
+  const map = {};
+  F.forEach(r=>{
+    if(!r.country) return;
+    if(mode==='new' && !(r.custType && r.custType.includes('新'))) return;
+    const region = countryRegion(r.country);
+    if(!map[region.key]) map[region.key] = { key:region.key, label:region.label, usd:0, rmb:0, orders:0, countries:new Set() };
+    const d = map[region.key];
+    d.usd += Number(r.usd) || 0;
+    d.rmb += Number(r.rmb) || 0;
+    d.orders++;
+    d.countries.add(r.country);
+  });
+  return map;
+}
+
+function countryRegion(country) {
+  const c = String(country || '').trim();
+  const groups = [
+    ['europe', 'regionEurope', ['英国','法国','德国','荷兰','西班牙','意大利','波兰','挪威','丹麦','比利时','罗马尼亚','斯洛文尼亚','立陶宛','马耳他','拉脱维亚','塞尔维亚','克罗地亚','爱沙尼亚','塞浦路斯','波斯尼亚','黑塞哥维那','希腊','葡萄牙','瑞典','芬兰','捷克','奥地利','匈牙利','保加利亚','爱尔兰','瑞士','乌克兰']],
+    ['americas', 'regionAmericas', ['美国','加拿大','墨西哥','阿根廷','智利','哥伦比亚','巴西','秘鲁','厄瓜多尔','巴拿马','关岛']],
+    ['middleEast', 'regionMiddleEast', ['以色列','沙特','阿联酋','阿拉伯','卡塔尔','科威特','阿曼','巴林','约旦','黎巴嫩','巴勒斯坦','伊拉克','伊朗','土耳其','也门']],
+    ['eastAsia', 'regionEastAsia', ['中国','日本','韩国','蒙古','香港','台湾']],
+    ['southeastAsia', 'regionSoutheastAsia', ['泰国','菲律宾','马来西亚','新加坡','印度尼西亚','印尼','越南','柬埔寨','老挝','缅甸','文莱']],
+    ['southAsia', 'regionSouthAsia', ['印度','巴基斯坦','孟加拉','斯里兰卡','尼泊尔']],
+    ['africa', 'regionAfrica', ['阿尔及利亚','埃及','摩洛哥','南非','加纳','肯尼亚','坦桑尼亚','赞比亚','纳米比亚','塞内加尔','加蓬','马拉维','尼日利亚','埃塞俄比亚','卢旺达','乌干达']],
+    ['oceania', 'regionOceania', ['澳大利亚','新西兰','斐济']]
+  ];
+  const found = groups.find(([, , names]) => names.some(name => c.includes(name)));
+  if (found) return { key: found[0], label: t(found[1]) };
+  return { key:'other', label:t('regionOther') };
+}
+
+// ── Orders Table ──────────────────────────────────────────────────────────────
+function renderOrderTable() {
+  const sorted=[...F].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('tableCount').textContent=`${sorted.length} orders`;
+  document.getElementById('tableBody').innerHTML = sorted.map(r=>`
+    <tr>
+      <td style="color:var(--muted)">${r.date}</td>
+      <td>${r.salesperson}</td>
+      <td>${r.country}</td>
+      <td style="color:var(--accent)">${r.usd>0?'$'+fmt(r.usd,2):'—'}</td>
+      <td style="color:var(--g4)">${r.rmb>0?'¥'+fmt(r.rmb,2):'—'}</td>
+      <td><span class="badge ${r.custType&&r.custType.includes('新')?'b-new':'b-old'}">${r.custType&&r.custType.includes('新')?t('badgeNew'):t('badgeReturn')}</span></td>
+      <td><span class="badge ${r.channel&&r.channel.includes('线上')?'b-on':'b-off'}">${r.channel&&r.channel.includes('线上')?t('badgeOnline'):t('badgeOffline')}</span></td>
+      <td style="color:var(--muted)">${r.store}</td>
+      <td style="color:var(--muted);font-size:12px">${r.operator||r.source||'—'}</td>
+      <td>${recordActions(r)}</td>
+    </tr>`).join('');
+}
+
+function recordActions(record) {
+  if (!record.id) return '<span style="color:var(--muted)">-</span>';
+  return `<div class="row-actions">
+    <button class="inline-btn" onclick="showEditRecordModal(${Number(record.id)})">${t('editBtn')}</button>
+    <button class="inline-btn danger" onclick="deleteRecord(${Number(record.id)})">${t('deleteBtn')}</button>
+  </div>`;
+}
+
+// ── i18n ─────────────────────────────────────────────────────────────────────
+let LANG = 'zh';
+const T = {
+  en: {
+    title: '外贸部销售数据看板',
+    refresh: '⟳ Refresh',
+    langBtn: '中文',
+    nav: ['Overview','Growth & Trends','Quarterly','Team Performance','Market Intelligence','Orders'],
+    filterLabel: 'Filter:',
+    allYears: 'All Years', allSp: 'All Salespeople', allCountries: 'All Countries',
+    allChannels: 'All Channels', online: 'Online', offline: 'Offline',
+    allStores: 'All Stores', reset: 'Reset',
+    kpiSec: 'Key Performance Indicators',
+    kpiUSD: 'Total Revenue (USD)', kpiRMB: 'Total Revenue (RMB)',
+    kpiOrders: 'Total Orders', kpiNew: 'New Customers',
+    kpiMarkets: 'Markets Reached', kpiAvg: 'Avg USD Order Value',
+    kpiOnline: 'Online Revenue %', kpiRet: 'Returning Customer Rev %',
+    trendTitle: 'Monthly Revenue Trend', trendSub: 'Revenue and order volume over time',
+    tabUSD:'USD', tabRMB:'RMB', tabOrders:'Orders',
+    currentMonthSec:'Current Month Analysis',
+    currentTopTitle:'This Month Sales Top 5',
+    currentChampionTitle:'Monthly Sales Champion',
+    growthStarTitle:'Growth Star',
+    latestDataMonth:'latest data month',
+    ordersUnit:'orders',
+    mom:'MoM',
+    newThisMonth:'new this month',
+    noPositiveGrowth:'No positive growth vs previous month',
+    noData:'No data',
+    topCnTitle:'Top Countries (USD)', topCnSub:'Top 12 markets',
+    custTypeTitle:'Customer Type', custTypeSub:'Order share',
+    chanTitle:'Channel Split', chanSub:'Online vs Offline',
+    yoyTitle:'Year-over-Year', yoySub:'Monthly USD by year',
+    storeTitle:'Store Performance', storeSub:'USD revenue share',
+    // growth page
+    custTrendTitle:'New vs Returning Customer Trend', custTrendSub:'Monthly order count — stacked',
+    cumTitle:'Cumulative Revenue (USD)', cumSub:'Running total since Jan 2024',
+    distTitle:'Order Value Distribution', distSub:'USD order size buckets',
+    paretoTitle:'Revenue Concentration (Pareto)', paretoSub:'Top orders → cumulative USD share',
+    sourceTitle:'Lead Source / Operator', sourceSub:'Orders by lead origin',
+    avgTitle:'Monthly Avg Order Value (USD)', avgSub:'Trend of average USD per order',
+    seasonTitle:'Seasonality Pattern', seasonSub:'Average USD revenue by calendar month across all years',
+    dowTitle:'Revenue by Day of Week', dowSub:'Total USD by weekday',
+    bigOrdersTitle:'Top 20 Largest Orders', bigOrdersSub:'Sorted by USD amount',
+    // team deep
+    spTrendTitle:'Salesperson Monthly Performance', spTrendSub:'USD revenue trend per salesperson over time',
+    winRateTitle:'New Customer Acquisition Rate', winRateSub:'Monthly new customer % per salesperson',
+    // market deep
+    cnYoyTitle:'Country Year-over-Year Growth', cnYoySub:'USD revenue change — countries active in both years',
+    newMktTitle:'New Markets Discovered', newMktSub:'Countries first reached each year',
+    mktConcTitle:'Market Concentration', mktConcSub:'Revenue share of top N countries',
+    newMktTableTitle:'New Markets Detail',
+    // quarterly
+    qKpiSec:'Quarterly Snapshot',
+    qRevTitle:'Quarterly Revenue', qRevSub:'USD & RMB per quarter',
+    qGrowthTitle:'Quarter-over-Quarter Growth', qGrowthSub:'USD revenue % change',
+    qYoyTitle:'Same Quarter Year-over-Year', qYoySub:'Compare Q1/Q2/Q3/Q4 across years',
+    qCustTitle:'Quarterly Customer Mix', qCustSub:'New vs Returning by quarter',
+    qChanTitle:'Quarterly Channel Mix', qChanSub:'Online vs Offline USD per quarter',
+    qSpTitle:'Quarterly Revenue by Salesperson', qSpSub:'Stacked USD contribution per quarter',
+    qTableTitle:'Quarterly Performance Summary',
+    // team
+    spScorecard:'Salesperson Scorecard', spSortHint:'Click column headers to sort',
+    colRank:'#', colName:'Salesperson', colOrders:'Orders', colUSD:'USD Revenue',
+    colRMB:'RMB Revenue', colAvg:'Avg USD Order', colNewPct:'New Cust %',
+    colCountries:'Countries', colMonths:'Active Months', colOpm:'Orders/Month',
+    spRevTitle:'Revenue by Salesperson', spRevSub:'USD total',
+    tabNewPct:'New%',
+    spCnTitle:'Countries per Salesperson', spCnSub:'Market reach',
+    hmTitle:'Salesperson Monthly Revenue Heatmap', hmSub:'USD per salesperson per month (darker = higher)',
+    // market
+    cnTableTitle:'Country Performance', cnSortHint:'Click headers to sort',
+    cnColRank:'#', cnColCountry:'Country', cnColOrders:'Orders', cnColUSD:'USD Revenue',
+    cnColAvg:'Avg Order', cnColNew:'New Cust %', cnColOnline:'Online %', cnColTopSp:'Top Salesperson',
+    cnTopTitle:'Top 15 Countries by Revenue', cnTopSub:'USD total',
+    cnOrdTitle:'Countries by Order Count', cnOrdSub:'Top 15',
+    regionPieTitle:'Regional Revenue Mix', regionPieSub:'USD share by continent / region',
+    regionRankTitle:'Regional Performance', regionRankSub:'USD, orders, and countries by region',
+    regionEurope:'Europe', regionAmericas:'Americas', regionMiddleEast:'Middle East',
+    regionEastAsia:'East Asia', regionSoutheastAsia:'Southeast Asia',
+    regionSouthAsia:'South Asia', regionAfrica:'Africa', regionOceania:'Oceania',
+    regionOther:'Other / Unclassified', regionCountriesUnit:'countries',
+    // orders
+    orderColDate:'Date', orderColSp:'Salesperson', orderColCn:'Country',
+    orderColUSD:'USD', orderColRMB:'RMB', orderColCust:'Customer',
+    orderColChan:'Channel', orderColStore:'Store', orderColOp:'Operator',
+    badgeNew:'New', badgeReturn:'Return', badgeOnline:'Online', badgeOffline:'Offline',
+    usdOrders:'USD orders', rmbOrders:'RMB orders', activeMonths:'active months',
+    ofTotal:'of orders', uniqueMarkets:'unique markets', perUSD:'per USD transaction',
+    retRevenue:'returning customer revenue',
+    newCustomer:'New Customer', returning:'Returning',
+    cumulativeUSD:'Cumulative USD', custTrendNew:'New Customer', custTrendRet:'Returning',
+    avgOrder:'Avg USD Order',
+    addRecordTitle: 'Add New Sales Record', editRecordTitle: 'Edit Sales Record', addRecordBtn: '+ Add Record',
+    cancelBtn: 'Cancel', saveBtn: 'Save Record', updateBtn: 'Update Record',
+    editBtn: 'Edit', deleteBtn: 'Delete', deleteConfirm: 'Delete this sales record?',
+    adminTokenPrompt: 'Enter the sales admin token to update data:',
+    adminTokenRequired: 'Admin token is required to update sales data.',
+    tabAllTime: 'All-Time', tabYoY: 'YoY Overlay', tabAOV: 'AOV', tabAll: 'All', tabNew: 'New Customers',
+    dealScatterTitle: 'Deal Size Distribution (Scatter)', dealScatterSub: 'Individual USD orders over time',
+    storeChannelTitle: 'Store vs Channel Matrix', storeChannelSub: 'Online vs Offline USD per store',
+  },
+  zh: {
+    title: '外贸部销售数据看板',
+    refresh: '⟳ 刷新',
+    langBtn: 'English',
+    nav: ['总览','增长趋势','季度分析','团队业绩','市场分析','订单明细'],
+    filterLabel: '筛选:',
+    allYears: '所有年份', allSp: '所有业务员', allCountries: '所有国家',
+    allChannels: '所有渠道', online: '线上', offline: '线下',
+    allStores: '所有店铺', reset: '重置',
+    kpiSec: '核心业绩指标',
+    kpiUSD: '总营收（美元）', kpiRMB: '总营收（人民币）',
+    kpiOrders: '总订单数', kpiNew: '新客户数量',
+    kpiMarkets: '覆盖市场数', kpiAvg: '平均客单价（美元）',
+    kpiOnline: '线上营收占比', kpiRet: '老客户营收占比',
+    trendTitle: '月度营收趋势', trendSub: '月度营收与订单量变化',
+    tabUSD:'美元', tabRMB:'人民币', tabOrders:'订单数',
+    currentMonthSec:'当月分析',
+    currentTopTitle:'本月销量Top5',
+    currentChampionTitle:'当月销量冠军',
+    growthStarTitle:'成长之星',
+    latestDataMonth:'最新数据月份',
+    ordersUnit:'单',
+    mom:'环比',
+    newThisMonth:'本月新增',
+    noPositiveGrowth:'较上月暂无正增长',
+    noData:'暂无数据',
+    topCnTitle:'国家营收排行（美元）', topCnSub:'前12名市场',
+    custTypeTitle:'客户类型', custTypeSub:'按订单数占比',
+    chanTitle:'渠道分布', chanSub:'线上 vs 线下',
+    yoyTitle:'年度对比', yoySub:'月度美元营收（按年）',
+    storeTitle:'店铺业绩', storeSub:'美元营收占比',
+    custTrendTitle:'新老客户趋势', custTrendSub:'月度订单数 — 堆叠图',
+    cumTitle:'累计营收（美元）', cumSub:'自2024年1月起累计',
+    distTitle:'订单金额分布', distSub:'美元订单区间统计',
+    paretoTitle:'营收集中度（帕累托）', paretoSub:'头部订单 → 累计美元占比',
+    sourceTitle:'客源 / 运营分析', sourceSub:'按来源统计订单数',
+    avgTitle:'月均客单价（美元）', avgSub:'月度平均订单金额趋势',
+    seasonTitle:'季节性规律', seasonSub:'各月平均美元营收（跨年平均）',
+    dowTitle:'星期营收分布', dowSub:'按星期汇总美元营收',
+    bigOrdersTitle:'前20大订单', bigOrdersSub:'按美元金额排序',
+    spTrendTitle:'业务员月度趋势', spTrendSub:'各业务员月度美元营收变化',
+    winRateTitle:'新客获取率', winRateSub:'各业务员月度新客占比',
+    cnYoyTitle:'国家同比增长', cnYoySub:'美元营收变化 — 两年均有数据的国家',
+    newMktTitle:'新市场开拓', newMktSub:'每年首次触达的国家',
+    mktConcTitle:'市场集中度', mktConcSub:'前N个国家的营收占比',
+    newMktTableTitle:'新市场明细',
+    qKpiSec:'季度快照',
+    qRevTitle:'季度营收', qRevSub:'每季度美元 & 人民币',
+    qGrowthTitle:'季度环比增长', qGrowthSub:'美元营收环比变化',
+    qYoyTitle:'同季度同比对比', qYoySub:'各年Q1/Q2/Q3/Q4对比',
+    qCustTitle:'季度客户结构', qCustSub:'每季度新老客户占比',
+    qChanTitle:'季度渠道结构', qChanSub:'每季度线上/线下美元营收',
+    qSpTitle:'季度业务员营收', qSpSub:'堆叠图 — 各业务员季度贡献',
+    qTableTitle:'季度业绩汇总',
+    spScorecard:'业务员综合评分', spSortHint:'点击表头排序',
+    colRank:'排名', colName:'业务员', colOrders:'订单数', colUSD:'美元营收',
+    colRMB:'人民币营收', colAvg:'均价（美元）', colNewPct:'新客占比',
+    colCountries:'覆盖国家', colMonths:'活跃月数', colOpm:'单月均单',
+    spRevTitle:'业务员营收', spRevSub:'美元总额',
+    tabNewPct:'新客%',
+    spCnTitle:'业务员覆盖国家数', spCnSub:'市场覆盖范围',
+    hmTitle:'业务员月度营收热力图', hmSub:'每格为美元营收（颜色越深越高）',
+    cnTableTitle:'国家业绩明细', cnSortHint:'点击表头排序',
+    cnColRank:'排名', cnColCountry:'国家', cnColOrders:'订单数', cnColUSD:'美元营收',
+    cnColAvg:'均价', cnColNew:'新客占比', cnColOnline:'线上占比', cnColTopSp:'主要业务员',
+    cnTopTitle:'营收前15国家', cnTopSub:'美元总额',
+    cnOrdTitle:'订单量前15国家', cnOrdSub:'前15名',
+    regionPieTitle:'区域/大洲营收占比', regionPieSub:'按欧洲、美洲、中东、东亚等区域统计美元占比',
+    regionRankTitle:'区域表现排行', regionRankSub:'按区域汇总美元营收、订单数和覆盖国家',
+    regionEurope:'欧洲', regionAmericas:'美洲', regionMiddleEast:'中东',
+    regionEastAsia:'东亚', regionSoutheastAsia:'东南亚',
+    regionSouthAsia:'南亚', regionAfrica:'非洲', regionOceania:'大洋洲',
+    regionOther:'其他/未分类', regionCountriesUnit:'个国家',
+    orderColDate:'日期', orderColSp:'业务员', orderColCn:'国家',
+    orderColUSD:'美元', orderColRMB:'人民币', orderColCust:'客户类型',
+    orderColChan:'渠道', orderColStore:'店铺', orderColOp:'运营/来源',
+    badgeNew:'新客', badgeReturn:'老客', badgeOnline:'线上', badgeOffline:'线下',
+    usdOrders:'美元订单', rmbOrders:'人民币订单', activeMonths:'活跃月份',
+    ofTotal:'占总订单', uniqueMarkets:'个市场', perUSD:'每笔美元订单',
+    retRevenue:'老客户营收',
+    newCustomer:'新客户', returning:'老客户',
+    cumulativeUSD:'累计美元营收', custTrendNew:'新客户', custTrendRet:'老客户',
+    avgOrder:'均价（美元）',
+    addRecordTitle: '新增销售记录', editRecordTitle: '编辑销售记录', addRecordBtn: '+ 新增记录',
+    cancelBtn: '取消', saveBtn: '保存记录', updateBtn: '更新记录',
+    editBtn: '编辑', deleteBtn: '删除', deleteConfirm: '确定删除这条销售记录吗？',
+    adminTokenPrompt: '请输入销售管理令牌以更新数据：',
+    adminTokenRequired: '需要管理令牌才能更新销售数据。',
+    tabAllTime: '全部时间', tabYoY: '年度同比叠加', tabAOV: '客单价', tabAll: '全部', tabNew: '新客户',
+    dealScatterTitle: '订单金额分布（散点图）', dealScatterSub: '按时间分布的各单美元金额',
+    storeChannelTitle: '店铺 vs 渠道矩阵', storeChannelSub: '各店铺线上与线下美元营收占比',
+  }
+};
+
+function t(key) { return T[LANG][key] || T.en[key] || key; }
+
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+function getTheme() { return document.documentElement.getAttribute('data-theme') || 'dark'; }
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme==='dark' ? '🌙' : '☀️';
+  try { localStorage.setItem('led-theme', theme); } catch(e){}
+}
+function toggleTheme() {
+  setTheme(getTheme()==='dark' ? 'light' : 'dark');
+  renderAll(); // re-render charts with new colors
+}
+// init theme from localStorage
+(function(){
+  let saved = 'light';
+  try {
+    const hasDefaulted = localStorage.getItem('led-theme-defaulted');
+    saved = hasDefaulted ? (localStorage.getItem('led-theme') || 'light') : 'light';
+    if (!hasDefaulted) localStorage.setItem('led-theme-defaulted', '1');
+  } catch(e){}
+  setTheme(saved);
+})();
+
+function toggleLang() {
+  LANG = LANG === 'en' ? 'zh' : 'en';
+  document.getElementById('langBtn').textContent = t('langBtn');
+  applyLangToDOM();
+  renderAll();
+}
+
+function applyLangToDOM() {
+  const l = T[LANG];
+  // title
+  const logoEl = document.querySelector('.logo');
+  // The logo has: <div class="logo-icon">🪞</div> then text node
+  const textNodes = [...logoEl.childNodes].filter(n=>n.nodeType===3);
+  if(textNodes.length) textNodes[0].textContent = l.title;
+  else logoEl.appendChild(document.createTextNode(l.title));
+  document.title = l.title;
+  document.getElementById('langBtn').textContent = l.langBtn;
+  document.querySelector('.btn-primary').textContent = l.refresh;
+  // nav tabs
+  document.querySelectorAll('.nav-tab').forEach((el,i)=>{ el.textContent=l.nav[i]||el.textContent; });
+  // filter
+  document.querySelector('.filter-label').textContent = l.filterLabel;
+  document.querySelector('#fYear option[value="all"]').textContent = l.allYears;
+  document.querySelector('#fSp option[value="all"]').textContent   = l.allSp;
+  document.querySelector('#fCountry option[value="all"]').textContent = l.allCountries;
+  document.querySelector('#fChannel option[value="all"]').textContent = l.allChannels;
+  document.querySelector('#fChannel option[value="线上"]').textContent = l.online;
+  document.querySelector('#fChannel option[value="线下"]').textContent = l.offline;
+  document.querySelector('#fStore option[value="all"]').textContent = l.allStores;
+  document.querySelector('button[onclick="resetFilters()"]').textContent = l.reset;
+  // KPI labels
+  const kpiLabels = document.querySelectorAll('.kpi-label');
+  const kpiKeys=['kpiUSD','kpiRMB','kpiOrders','kpiNew','kpiMarkets','kpiAvg','kpiOnline','kpiRet'];
+  kpiLabels.forEach((el,i)=>{ if(kpiKeys[i]) el.textContent=l[kpiKeys[i]]; });
+  // section title
+  document.querySelector('.sec').textContent = l.kpiSec;
+  // card titles & subtitles via data-t attributes
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    el.textContent = l[el.dataset.t] || T.en[el.dataset.t] || el.textContent;
+  });
+  // tab buttons
+  document.querySelectorAll('[data-tkey]').forEach(el=>{
+    el.textContent = l[el.dataset.tkey] || T.en[el.dataset.tkey] || el.textContent;
+  });
+}
+
+// ── Download buttons ──────────────────────────────────────────────────────────
+const DL_SVG = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+
+function injectDownloadButtons() {
+  // Inject into card headers (charts)
+  document.querySelectorAll('.card-hd').forEach(hd => {
+    if(hd.querySelector('.dl-btn')) return;
+    const card = hd.closest('.card');
+    if(!card) return;
+    const canvas = card.querySelector('canvas');
+    const progBars = card.querySelector('.prog-row');
+    const hmTable = card.querySelector('.hm');
+    if(!canvas && !progBars && !hmTable) return;
+    const btn = document.createElement('button');
+    btn.className = 'dl-btn';
+    btn.title = 'Download';
+    btn.innerHTML = DL_SVG;
+    btn.onclick = () => downloadCard(card);
+    hd.appendChild(btn);
+  });
+  // Inject into table headers
+  document.querySelectorAll('.tw-hd').forEach(hd => {
+    if(hd.querySelector('.dl-btn')) return;
+    const tw = hd.closest('.tw');
+    if(!tw) return;
+    const table = tw.querySelector('table');
+    if(!table) return;
+    const btn = document.createElement('button');
+    btn.className = 'dl-btn';
+    btn.title = 'Download CSV';
+    btn.innerHTML = DL_SVG;
+    btn.onclick = () => downloadTableCSV(tw);
+    hd.appendChild(btn);
+  });
+}
+
+function downloadCard(card) {
+  const canvas = card.querySelector('canvas');
+  if(canvas) {
+    const title = card.querySelector('.card-title')?.textContent || '';
+    const sub   = card.querySelector('.card-sub')?.textContent || '';
+    const w = canvas.width;
+    const padding = 20;
+    const titleH = title ? 28 : 0;
+    const subH   = sub ? 18 : 0;
+    const headerH = padding + titleH + subH + (sub ? 4 : 0) + 10;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = w;
+    tempCanvas.height = canvas.height + headerH;
+    const ctx = tempCanvas.getContext('2d');
+    const bg = tc('--chart-canvas-bg');
+    const textColor = tc('--text');
+    const mutedColor = tc('--muted');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    // draw title
+    if(title) {
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText(title, padding, padding + 20);
+    }
+    // draw subtitle
+    if(sub) {
+      ctx.fillStyle = mutedColor;
+      ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText(sub, padding, padding + titleH + 16);
+    }
+    // draw chart below header
+    ctx.drawImage(canvas, 0, headerH);
+    const link = document.createElement('a');
+    link.download = (title||'chart').replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') + '.png';
+    link.href = tempCanvas.toDataURL('image/png');
+    link.click();
+    return;
+  }
+  // For non-canvas cards (progress bars, heatmaps) — use html2canvas-like approach via DOM screenshot
+  // Fallback: export as image by drawing the card
+  exportDomAsImage(card);
+}
+
+function exportDomAsImage(el) {
+  // Use canvas-based approach: render the element to an offscreen canvas
+  // For simplicity, we'll export the data as CSV instead
+  const title = el.querySelector('.card-title')?.textContent || 'data';
+  // Try to extract progress bar data
+  const rows = el.querySelectorAll('.prog-row');
+  if(rows.length) {
+    let csv = 'Name,Value\n';
+    rows.forEach(row => {
+      const lbl = row.querySelector('.prog-lbl')?.textContent?.trim() || '';
+      const val = row.querySelector('.prog-val')?.textContent?.trim() || '';
+      csv += '"' + lbl + '","' + val + '"\n';
+    });
+    downloadCSVString(csv, title);
+    return;
+  }
+  // Heatmap table
+  const hm = el.querySelector('.hm');
+  if(hm) {
+    downloadTableEl(hm, title);
+    return;
+  }
+}
+
+function downloadTableCSV(tw) {
+  const table = tw.querySelector('table');
+  if(!table) return;
+  const title = tw.querySelector('.tw-hd-title')?.textContent || 'table';
+  downloadTableEl(table, title);
+}
+
+function downloadTableEl(table, title) {
+  const rows = table.querySelectorAll('tr');
+  let csv = '';
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('th, td');
+    const line = [...cells].map(c => '"' + c.textContent.replace(/"/g, '""').trim() + '"').join(',');
+    csv += line + '\n';
+  });
+  downloadCSVString(csv, title);
+}
+
+function downloadCSVString(csv, title) {
+  const BOM = '\uFEFF'; // for Excel Chinese support
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.download = title.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') + '.csv';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+boot();
+</script>
+</body>
+</html>
