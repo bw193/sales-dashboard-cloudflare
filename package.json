@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node -e \"console.log('Static Pages project: no build step required')\"",
+    "preview": "node preview-server.mjs",
     "dev": "npx wrangler pages dev .",
     "deploy:pages": "npx wrangler pages deploy .",
     "db:schema": "npx wrangler d1 execute sales-dashboard-db --remote --file=api/schema.sql",
