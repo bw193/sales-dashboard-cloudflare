@@ -974,10 +974,12 @@ const SP_ALIASES = {
   '张琳':'观星客','朱雯梦':'凌云渡','陆浩杰':'飞羽卫','沈志芳':'凌波',
   '黄冰鑫':'尤川','陆雨冬':'陆小凤','庞宁':'白玉汤','周泓瑜':'千机变'
 };
-// 管理员模式：显示真实姓名。秘钥经 SHA-256 校验（明文仅告知管理员）。
+// 管理员秘钥：同一把钥匙既用于「显示真实姓名」，也用于「新增/编辑/删除」写操作。
+// 客户端只存 SHA-256 摘要做显隐校验（明文不落代码，仅告知管理员）；写操作由后端用
+// 同一明文校验 —— Cloudflare 环境变量 SALES_ADMIN_TOKEN 必须设为同一个明文值。
 let IS_ADMIN = false;
 const ADMIN_KEY_HASH = '008d151819520b23fbe96f0d1ff8ad6521686b4a69bc1994f3db9af56782d584';
-const ADMIN_KEY_B64  = 'V2FpTWFvQEFkbWluMjAyNg=='; // fallback for non-secure contexts (file://)
+const ADMIN_TOKEN_LS = 'sales_admin_token'; // 写操作令牌在 localStorage 的键名
 
 // 显示文本：管理员→真实姓名；否则→花名，无花名（已离职）→真实姓名。不含 HTML。
 function spName(real) {
@@ -1011,8 +1013,14 @@ async function toggleAdmin() {
   if (IS_ADMIN) { setAdmin(false); return; }
   const key = prompt(t('adminRevealPrompt'));
   if (key == null) return;
-  if (await verifyAdminKey(key.trim())) setAdmin(true);
-  else alert(t('adminRevealWrong'));
+  const k = key.trim();
+  if (await verifyAdminKey(k)) {
+    // 同一把秘钥：进入管理员模式即授权写操作，新增/编辑/删除无需再次输入令牌。
+    try { localStorage.setItem(ADMIN_TOKEN_LS, k); } catch (e) {}
+    setAdmin(true);
+  } else {
+    alert(t('adminRevealWrong'));
+  }
 }
 async function verifyAdminKey(key) {
   if (!key) return false;
@@ -1021,12 +1029,19 @@ async function verifyAdminKey(key) {
     const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
     return hex === ADMIN_KEY_HASH;
   } catch (e) {
-    try { return btoa(unescape(encodeURIComponent(key))) === ADMIN_KEY_B64; } catch (e2) { return false; }
+    return false;
   }
 }
 function setAdmin(on) {
   IS_ADMIN = !!on;
-  try { on ? sessionStorage.setItem('sp_admin', '1') : sessionStorage.removeItem('sp_admin'); } catch (e) {}
+  try {
+    if (on) {
+      sessionStorage.setItem('sp_admin', '1');
+    } else {
+      sessionStorage.removeItem('sp_admin');
+      localStorage.removeItem(ADMIN_TOKEN_LS); // 退出管理员同时收回写授权
+    }
+  } catch (e) {}
   // 业务员筛选项在花名/真实姓名间切换，重置以避免选中值失效
   const fsp = document.getElementById('fSp');
   if (fsp) fsp.value = 'all';
@@ -1042,9 +1057,6 @@ function updateAdminUI() {
     btn.title = IS_ADMIN ? t('adminOnTip') : t('adminOffTip');
     btn.classList.toggle('admin-on', IS_ADMIN);
   }
-  // 增删改属管理员功能：仅管理员模式可见
-  const addBtn = document.getElementById('addBtn');
-  if (addBtn) addBtn.style.display = IS_ADMIN ? '' : 'none';
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
@@ -1193,7 +1205,7 @@ async function apiWrite(url, method, record) {
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) {
-    try { localStorage.removeItem('sales_admin_token'); } catch(e) {}
+    try { localStorage.removeItem(ADMIN_TOKEN_LS); } catch(e) {}
   }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data.record;
@@ -1201,12 +1213,12 @@ async function apiWrite(url, method, record) {
 
 function getAdminToken() {
   let token = '';
-  try { token = localStorage.getItem('sales_admin_token') || ''; } catch(e) {}
+  try { token = localStorage.getItem(ADMIN_TOKEN_LS) || ''; } catch(e) {}
   if (!token) {
     token = prompt(t('adminTokenPrompt')) || '';
     token = token.trim();
     if (token) {
-      try { localStorage.setItem('sales_admin_token', token); } catch(e) {}
+      try { localStorage.setItem(ADMIN_TOKEN_LS, token); } catch(e) {}
     }
   }
   return token;
@@ -1241,7 +1253,7 @@ async function deleteRecord(id) {
     const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { accept: 'application/json', authorization: `Bearer ${token}` } });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {
-      try { localStorage.removeItem('sales_admin_token'); } catch(e) {}
+      try { localStorage.removeItem(ADMIN_TOKEN_LS); } catch(e) {}
     }
     if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
     ALL = ALL.filter(r => Number(r.id) !== Number(id));
@@ -3355,7 +3367,6 @@ function renderOrderTable() {
 }
 
 function recordActions(record) {
-  if (!IS_ADMIN) return '<span style="color:var(--muted)">-</span>';
   if (!record.id) return '<span style="color:var(--muted)">-</span>';
   return `<div class="row-actions">
     <button class="inline-btn" onclick="showEditRecordModal(${Number(record.id)})">${t('editBtn')}</button>
@@ -3461,7 +3472,7 @@ const T = {
     addRecordTitle: 'Add New Sales Record', editRecordTitle: 'Edit Sales Record', addRecordBtn: '+ Add Record',
     cancelBtn: 'Cancel', saveBtn: 'Save Record', updateBtn: 'Update Record',
     editBtn: 'Edit', deleteBtn: 'Delete', deleteConfirm: 'Delete this sales record?',
-    adminTokenPrompt: 'Enter the sales admin token to update data:',
+    adminTokenPrompt: 'Enter the admin key (the same key that reveals real names):',
     adminTokenRequired: 'Admin token is required to update sales data.',
     departedTip: 'Former employee (resigned)',
     adminRevealPrompt: 'Enter the admin key to reveal real names:',
@@ -3570,7 +3581,7 @@ const T = {
     addRecordTitle: '新增销售记录', editRecordTitle: '编辑销售记录', addRecordBtn: '+ 新增记录',
     cancelBtn: '取消', saveBtn: '保存记录', updateBtn: '更新记录',
     editBtn: '编辑', deleteBtn: '删除', deleteConfirm: '确定删除这条销售记录吗？',
-    adminTokenPrompt: '请输入销售管理令牌以更新数据：',
+    adminTokenPrompt: '请输入管理员秘钥（与显示真实姓名为同一把钥匙）：',
     adminTokenRequired: '需要管理令牌才能更新销售数据。',
     departedTip: '已离职',
     adminRevealPrompt: '请输入管理员秘钥以显示真实姓名：',

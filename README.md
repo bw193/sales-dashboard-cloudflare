@@ -51,6 +51,14 @@ npm run db:schema
 Read-only dashboard views do not need a browser token. Write actions prompt for
 the admin token and send it as a bearer token.
 
+**One admin key for everything.** The single admin key both reveals real
+salesperson names (client-side, checked against the SHA-256 in `index.html`'s
+`ADMIN_KEY_HASH`) **and** authorizes add/edit/delete (server-side, checked
+against `SALES_ADMIN_TOKEN`). For the unified key to work, the Pages secret
+`SALES_ADMIN_TOKEN` must be set to the **exact same plaintext** as the reveal
+key. To rotate it, change `SALES_ADMIN_TOKEN` and update `ADMIN_KEY_HASH` to the
+new key's SHA-256.
+
 ## Local Preview
 
 Cloudflare Pages local D1 preview may require a working Workers runtime. If

@@ -1,1 +1,3 @@
+# Must be the EXACT same plaintext as the front-end admin key (the one that
+# reveals real names). One key authorizes both real-name reveal and add/edit/delete.
 SALES_ADMIN_TOKEN="change-me"
