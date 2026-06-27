@@ -13,6 +13,11 @@ html[data-theme="light"]{--bg:#f6f8fb;--surface:#ffffff;--surface2:#f1f5f9;--bor
 *:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.45}
 a{color:inherit;text-decoration:none}
+html{scrollbar-color:var(--border-strong) transparent;scrollbar-width:thin}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;border:2px solid var(--bg);transition:background .2s ease}
+*::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
 /* animations */
 @keyframes fadeInUp { from { opacity: 0; transform: translate3d(0,10px,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
@@ -77,7 +82,24 @@ main{padding:24px;max-width:1600px;margin:0 auto}
 .kpi-val{font-size:26px;font-weight:700;line-height:1.05;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
 .kpi-sub{font-size:11.5px;color:var(--muted);margin-top:5px}
 .kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:20px;margin-top:8px;font-weight:600;letter-spacing:0.01em;animation:scaleIn .35s var(--ease-spring) both;animation-delay:.25s}
+.kpi-deltas{display:flex;flex-direction:column;align-items:flex-start;gap:0}
 .up{background:rgba(34,197,94,.13);color:var(--g2)}.down{background:rgba(239,68,68,.13);color:var(--g3)}
+.kpi>*{position:relative;z-index:1}
+.kpi-spark{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:0;pointer-events:none;opacity:.85;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.kpi-spark svg{width:100%;height:100%;display:block}
+.kpi-spark .spark-line{stroke-dasharray:100;stroke-dashoffset:100;animation:sparkDraw .9s var(--ease-out-cubic) forwards}
+@keyframes sparkDraw{to{stroke-dashoffset:0}}
+
+/* executive insights strip */
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px;margin-bottom:24px}
+.insight{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px 14px 18px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:border-color .18s ease,transform .22s var(--ease-spring),box-shadow .22s var(--ease-spring);animation:fadeInUp .5s var(--ease-spring) both}
+.insight::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--ic,var(--accent)),color-mix(in srgb,var(--ic,var(--accent)) 45%,transparent))}
+.insight:hover{border-color:var(--border-strong);box-shadow:var(--hover-shadow);transform:translate3d(0,-2px,0)}
+.insight-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:color-mix(in srgb,var(--ic,var(--accent)) 16%,transparent);flex-shrink:0}
+.insight-body{min-width:0;flex:1}
+.insight-title{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.insight-metric{font-size:16px;font-weight:700;letter-spacing:-0.01em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.insight-desc{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 
 /* chart card */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -155,6 +177,12 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 
 /* rank medal */
 .medal{font-size:15px}
+
+/* departed (former) salesperson — no 花名, shown greyed */
+.sp-off{color:var(--muted)!important;opacity:.6;font-style:italic;font-weight:400!important}
+.hm .sp-off{font-weight:400!important}
+/* admin (real-name) mode indicator */
+#adminBtn.admin-on{background:linear-gradient(135deg,var(--g5),#f59e0b);border-color:transparent;color:#fff;font-weight:600}
 
 /* Modal */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; opacity:0; transition:opacity .18s ease }
@@ -279,8 +307,9 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
   <div class="logo"><div class="logo-icon">🪞</div>外贸部销售数据看板</div>
   <div style="display:flex;align-items:center;gap:12px">
     <span class="last-updated" id="lastUpdated"></span>
-    <button class="btn btn-primary" style="background:var(--g2);border-color:var(--g2)" onclick="showAddRecordModal()" data-t="addRecordBtn">+ Add Record</button>
+    <button class="btn btn-primary" id="addBtn" style="background:var(--g2);border-color:var(--g2)" onclick="showAddRecordModal()" data-t="addRecordBtn">+ Add Record</button>
     <button class="btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+    <button class="btn" id="adminBtn" onclick="toggleAdmin()" title="Reveal real names (admin)">🔒 真实姓名</button>
     <button class="btn" id="langBtn" onclick="toggleLang()">中文</button>
     <button class="btn btn-primary" id="refreshBtn" onclick="doRefresh()"><span class="refresh-icon">⟳</span> <span id="refreshLabel">Refresh</span></button>
   </div>
@@ -325,50 +354,61 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
       <div class="kpi-val" id="k-usd">—</div>
       <div class="kpi-sub" id="k-usd-sub"></div>
       <div class="kpi-delta" id="k-usd-delta"></div>
+      <div class="kpi-spark" id="spark-usd"></div>
     </div>
     <div class="kpi" style="--ca:var(--g4)">
       <div class="kpi-label">Total Revenue (RMB)</div>
       <div class="kpi-val" id="k-rmb">—</div>
       <div class="kpi-sub" id="k-rmb-sub"></div>
       <div class="kpi-delta" id="k-rmb-delta"></div>
+      <div class="kpi-spark" id="spark-rmb"></div>
     </div>
     <div class="kpi" style="--ca:var(--g2)">
       <div class="kpi-label">Total Orders</div>
       <div class="kpi-val" id="k-orders">—</div>
       <div class="kpi-sub" id="k-orders-sub"></div>
       <div class="kpi-delta" id="k-orders-delta"></div>
+      <div class="kpi-spark" id="spark-orders"></div>
     </div>
     <div class="kpi" style="--ca:var(--g5)">
       <div class="kpi-label">New Customers</div>
       <div class="kpi-val" id="k-new">—</div>
       <div class="kpi-sub" id="k-new-sub"></div>
       <div class="kpi-delta" id="k-new-delta"></div>
+      <div class="kpi-spark" id="spark-new"></div>
     </div>
     <div class="kpi" style="--ca:var(--g3)">
       <div class="kpi-label">Markets Reached</div>
       <div class="kpi-val" id="k-countries">—</div>
       <div class="kpi-sub" id="k-countries-sub"></div>
       <div class="kpi-delta" id="k-countries-delta"></div>
+      <div class="kpi-spark" id="spark-countries"></div>
     </div>
     <div class="kpi" style="--ca:#e3b341">
       <div class="kpi-label">Avg USD Order Value</div>
       <div class="kpi-val" id="k-avg">—</div>
       <div class="kpi-sub" id="k-avg-sub"></div>
       <div class="kpi-delta" id="k-avg-delta"></div>
+      <div class="kpi-spark" id="spark-avg"></div>
     </div>
     <div class="kpi" style="--ca:#79c0ff">
       <div class="kpi-label">Online Revenue %</div>
       <div class="kpi-val" id="k-online">—</div>
       <div class="kpi-sub" id="k-online-sub"></div>
       <div class="kpi-delta" id="k-online-delta"></div>
+      <div class="kpi-spark" id="spark-online"></div>
     </div>
     <div class="kpi" style="--ca:#56d364">
       <div class="kpi-label">Returning Customer Rev %</div>
       <div class="kpi-val" id="k-ret">—</div>
       <div class="kpi-sub" id="k-ret-sub"></div>
       <div class="kpi-delta" id="k-ret-delta"></div>
+      <div class="kpi-spark" id="spark-ret"></div>
     </div>
   </div>
+
+  <div class="sec" data-t="insightsSec">Executive Insights</div>
+  <div class="insights" id="insightStrip"></div>
 
   <div class="sec sec-gap" data-t="currentMonthSec">Current Month Analysis</div>
   <div class="grid3">
@@ -579,6 +619,12 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
       <div class="card-hd"><div><div class="card-title" data-t="qYoyTitle">Same Quarter Year-over-Year</div><div class="card-sub" data-t="qYoySub">Compare Q1/Q2/Q3/Q4 across years</div></div></div>
       <div class="cw" style="height:250px"><canvas id="chartQtrYoY"></canvas></div>
     </div>
+  </div>
+
+  <!-- Quarterly YoY Growth (同比) -->
+  <div class="card mb">
+    <div class="card-hd"><div><div class="card-title" data-t="qYoyGrowthTitle">Quarterly YoY Growth</div><div class="card-sub" data-t="qYoyGrowthSub">USD revenue vs same quarter last year</div></div></div>
+    <div class="cw" style="height:250px"><canvas id="chartQtrYoYGrowth"></canvas></div>
   </div>
 
   <!-- Quarterly New vs Returning + Channel -->
@@ -835,29 +881,63 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 <script>
 Chart.register(ChartDataLabels);
 const CHART_DPR = Math.min(window.devicePixelRatio || 1, 1.5);
-// Chart.js 4.4.0 intermittently throws "TypeError: this._fn is not a function"
-// during animation tick when a transition config has duration without easing.
-// Patching individual configs didn't fully eliminate it, so animations are
-// disabled. Charts paint instantly. To re-enable, upgrade Chart.js to a
-// release where the easing-merge bug is fixed.
-const CHART_ANIMATION = false;
-const CHART_TRANSITIONS = {
-  active: { animation: { duration: 0 } },
-  resize: { animation: { duration: 0 } }
-};
-Chart.defaults.animation = false;
+const REDUCE_MOTION = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+// Chart animations are ON. Chart.js 4.4.0 had a crash ("TypeError: this._fn is
+// not a function") on an animation/hover tick: the Animation constructor looks
+// up an interpolator with `Ds[t.type || typeof o]`, which is undefined when a
+// property animates with no explicit `type` and a non-number/color value — so
+// `_fn` is undefined and `tick()` throws. The real fix lives in
+// vendor/chart.umd.min.js, where that lookup now falls back to a snap
+// interpolator. Here we additionally give every animation/transition a valid
+// `easing` so motion is smooth and deterministic.
+const CHART_EASING = 'easeOutQuart';
+const CHART_ANIM_MS = 780;
+const CHART_ANIMATION = REDUCE_MOTION
+  ? false
+  : { duration: CHART_ANIM_MS, easing: CHART_EASING };
+const CHART_TRANSITIONS = REDUCE_MOTION
+  ? { active: { animation: { duration: 0, easing: CHART_EASING } }, resize: { animation: { duration: 0, easing: CHART_EASING } } }
+  : {
+      active: { animation: { duration: 200, easing: CHART_EASING } },
+      resize: { animation: { duration: 0, easing: CHART_EASING } }
+    };
+Chart.defaults.animation = CHART_ANIMATION;
 Chart.defaults.resizeDelay = 120;
 Chart.defaults.devicePixelRatio = CHART_DPR;
 Chart.defaults.normalized = true;
-// Defensive walk: zero out any duration in Chart.defaults.transitions so no
-// internal transition can fire the animation loop.
-(function disableTransitionAnimations(node) {
+// Defensive walk: ensure every node that declares a `duration` also declares an
+// `easing`, eliminating the Chart.js 4.4.0 "_fn is not a function" crash for
+// every built-in transition (active / resize / show / hide).
+(function ensureEasing(node) {
   if (!node || typeof node !== 'object') return;
-  if ('duration' in node) node.duration = 0;
+  if ('duration' in node && !('easing' in node)) node.easing = CHART_EASING;
   for (const k in node) {
-    if (node[k] && typeof node[k] === 'object') disableTransitionAnimations(node[k]);
+    if (node[k] && typeof node[k] === 'object') ensureEasing(node[k]);
   }
 })(Chart.defaults.transitions);
+// Entrance animation presets per chart family. Returned object is spread into a
+// chart's `options.animation` so each chart type reveals with a fitting motion.
+function entranceAnim(kind) {
+  if (REDUCE_MOTION) return false;
+  if (kind === 'donut') {
+    return { duration: CHART_ANIM_MS, easing: CHART_EASING, animateRotate: true, animateScale: true };
+  }
+  if (kind === 'bar') {
+    // Bars grow up from the axis with a brief per-bar stagger.
+    return {
+      duration: CHART_ANIM_MS, easing: CHART_EASING,
+      delay: ctx => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 14 : 0
+    };
+  }
+  if (kind === 'line') {
+    // Points fade/rise in sequence so the line appears to draw left-to-right.
+    return {
+      duration: CHART_ANIM_MS, easing: CHART_EASING,
+      delay: ctx => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 10 : 0
+    };
+  }
+  return { duration: CHART_ANIM_MS, easing: CHART_EASING };
+}
 
 // ── State ────────────────────────────────────────────────────────────────────
 let ALL = [], F = [];
@@ -869,7 +949,7 @@ const trendMode  = { chartTrend: 'usd', chartSpRev: 'usd', chartQtrRev: 'usd' };
 const PAGE_CHARTS = Object.freeze({
   'page-overview': ['chartTrend','chartYoY','chartCustType','chartChannel','chartStore'],
   'page-growth': ['chartCustTrend','chartDealScatter','chartCumulative','chartOrderDist','chartPareto','chartSource','chartAvgOrder','chartSeason','chartDow','chartCumulativeYearly','chartGrowthRate','chartAvgByType'],
-  'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrCust','chartQtrChan','chartQtrSp'],
+  'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrYoYGrowth','chartQtrCust','chartQtrChan','chartQtrSp'],
   'page-team': ['chartSpRev','chartSpCountries','chartSpTrend','chartWinRate'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
   'page-orders': []
@@ -880,6 +960,92 @@ let downloadButtonsQueued = false;
 
 // ── Colors ───────────────────────────────────────────────────────────────────
 const C = ['#58a6ff','#3fb950','#f78166','#d2a8ff','#ffa657','#79c0ff','#56d364','#ffa198','#bc8cff','#ffb77c','#a5d6ff','#85e89d','#e3b341','#f0883e','#ff7b72'];
+
+// ── Salesperson aliases (花名) ────────────────────────────────────────────────
+// 真实姓名 → 花名（外贸部 + 跨境电商部 + 跟单组，源自《花名对照表》）。
+// 不在表内的业务员视为已离职：保留真实姓名并置灰。
+const SP_ALIASES = {
+  // 外贸部 业务组
+  '刘露露':'百晓生','沈艳晨':'阿飞','李怡蕾':'司空摘月','陈慧':'莫小贝',
+  '张卜凡':'橙留香','张婷婷':'踏月','刘畅':'双翎九天','邹梦君':'阿紫',
+  // 跟单组（外贸部 / 跨境部共用）
+  '薛向芹':'流云','项飞飞':'无忧','王显艳':'疏影','刘登凤':'凤挽星','陈艳云':'云踪',
+  // 跨境电商部 业务组
+  '张琳':'观星客','朱雯梦':'凌云渡','陆浩杰':'飞羽卫','沈志芳':'凌波',
+  '黄冰鑫':'尤川','陆雨冬':'陆小凤','庞宁':'白玉汤','周泓瑜':'千机变'
+};
+// 管理员模式：显示真实姓名。秘钥经 SHA-256 校验（明文仅告知管理员）。
+let IS_ADMIN = false;
+const ADMIN_KEY_HASH = '008d151819520b23fbe96f0d1ff8ad6521686b4a69bc1994f3db9af56782d584';
+const ADMIN_KEY_B64  = 'V2FpTWFvQEFkbWluMjAyNg=='; // fallback for non-secure contexts (file://)
+
+// 显示文本：管理员→真实姓名；否则→花名，无花名（已离职）→真实姓名。不含 HTML。
+function spName(real) {
+  const name = String(real ?? '').trim();
+  if (!name) return name;
+  if (IS_ADMIN) return name;
+  return SP_ALIASES[name] || name;
+}
+// 是否为已离职业务员（在数据中出现但无花名）。
+function spDeparted(real) {
+  const name = String(real ?? '').trim();
+  return !!name && !SP_ALIASES[name];
+}
+// 业务员姓名的 HTML（含已离职置灰）。用于表格/进度条/热力图等 HTML 渲染点。
+function spHtml(real) {
+  const name = String(real ?? '').trim();
+  if (!name) return '';
+  const shown = spName(name);
+  if (spDeparted(name)) return `<span class="sp-off" title="${escHtml(t('departedTip'))}">${escHtml(shown)}</span>`;
+  return escHtml(shown);
+}
+// 把业务员姓名写入指定元素的 textContent，并按需置灰（用于 KPI 数值元素）。
+function setSp(id, real) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = spName(real);
+  el.classList.toggle('sp-off', spDeparted(real));
+}
+// ── 管理员模式切换 ────────────────────────────────────────────────────────────
+async function toggleAdmin() {
+  if (IS_ADMIN) { setAdmin(false); return; }
+  const key = prompt(t('adminRevealPrompt'));
+  if (key == null) return;
+  if (await verifyAdminKey(key.trim())) setAdmin(true);
+  else alert(t('adminRevealWrong'));
+}
+async function verifyAdminKey(key) {
+  if (!key) return false;
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
+    const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    return hex === ADMIN_KEY_HASH;
+  } catch (e) {
+    try { return btoa(unescape(encodeURIComponent(key))) === ADMIN_KEY_B64; } catch (e2) { return false; }
+  }
+}
+function setAdmin(on) {
+  IS_ADMIN = !!on;
+  try { on ? sessionStorage.setItem('sp_admin', '1') : sessionStorage.removeItem('sp_admin'); } catch (e) {}
+  // 业务员筛选项在花名/真实姓名间切换，重置以避免选中值失效
+  const fsp = document.getElementById('fSp');
+  if (fsp) fsp.value = 'all';
+  updateAdminUI();
+  populateFilters();
+  applyLangToDOM();
+  applyFilters();
+}
+function updateAdminUI() {
+  const btn = document.getElementById('adminBtn');
+  if (btn) {
+    btn.textContent = IS_ADMIN ? t('adminOnLabel') : t('adminOffLabel');
+    btn.title = IS_ADMIN ? t('adminOnTip') : t('adminOffTip');
+    btn.classList.toggle('admin-on', IS_ADMIN);
+  }
+  // 增删改属管理员功能：仅管理员模式可见
+  const addBtn = document.getElementById('addBtn');
+  if (addBtn) addBtn.style.display = IS_ADMIN ? '' : 'none';
+}
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 async function boot() {
@@ -892,6 +1058,8 @@ async function boot() {
     document.getElementById('loading').innerHTML = `<div style="color:var(--g3);text-align:center;max-width:460px;padding:30px"><b>Cloudflare database unavailable</b><br><br>The dashboard requires the Cloudflare D1 backend at <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">/api/sales</code>.</div>`;
     return;
   }
+  try { IS_ADMIN = sessionStorage.getItem('sp_admin') === '1'; } catch (e) {}
+  updateAdminUI();
   updateLastUpdated();
   populateFilters();
   applyLangToDOM();
@@ -1096,7 +1264,8 @@ function showPage(id, el) {
 // ── Filters ──────────────────────────────────────────────────────────────────
 function populateFilters() {
   const unique = (key) => [...new Set(ALL.map(r=>r[key]).filter(Boolean))].sort();
-  fill('fSp',      'All Salespeople', unique('salesperson'));
+  const spDisplay = [...new Set(ALL.map(r=>spName(r.salesperson)).filter(Boolean))].sort();
+  fill('fSp',      'All Salespeople', spDisplay);
   fill('fCountry', 'All Countries',   unique('country'));
   fill('fStore',   'All Stores',      unique('store'));
   populateRecordChoices(unique);
@@ -1132,7 +1301,7 @@ function applyFilters() {
   const dFrom = v('fDateFrom'), dTo = v('fDateTo');
   F = ALL.filter(r =>
     (yr==='all'||r.year==yr) &&
-    (sp==='all'||r.salesperson===sp) &&
+    (sp==='all'||spName(r.salesperson)===sp) &&
     (cn==='all'||r.country===cn) &&
     (ch==='all'||(r.channel&&r.channel.includes(ch))) &&
     (st==='all'||r.store===st) &&
@@ -1154,6 +1323,7 @@ function renderAll() {
   const active = document.querySelector('.page.active')?.id || '';
   destroyInactiveCharts(active);
   if(active === 'page-overview') {
+    renderInsights();
     renderCurrentMonthAnalysis();
     renderTrend(); renderYoY(); renderCountryBars();
     renderCustTypeDonut(); renderChannelDonut(); renderStoreDonut();
@@ -1164,7 +1334,7 @@ function renderAll() {
     renderCumulativeYearly(); renderGrowthRate(); renderAvgByType();
     renderBigOrders();
   } else if(active === 'page-quarterly') {
-    renderQtrKPIs(); renderQtrRev(); renderQoQ(); renderQtrYoY();
+    renderQtrKPIs(); renderQtrRev(); renderQoQ(); renderQtrYoY(); renderQtrYoYGrowth();
     renderQtrCust(); renderQtrChan(); renderQtrSp(); renderQtrTable();
   } else if(active === 'page-team') {
     renderSpTable(); renderSpRevChart(); renderSpCountries(); renderHeatmap();
@@ -1207,14 +1377,16 @@ function scheduleDownloadButtons() {
 // read CSS variable from current theme
 function tc(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
-function darkOpts({ yPfx='', indexAxis='x', spanGaps=false }={}) {
+function darkOpts({ yPfx='', indexAxis='x', spanGaps=false, kind='' }={}) {
   const valAxis = indexAxis==='y' ? 'x' : 'y';
   const catAxis = indexAxis==='y' ? 'y' : 'x';
   const valTick = val=>(yPfx+(val>=1e6?(val/1e6).toFixed(1)+'M':val>=1000?(val/1000).toFixed(0)+'K':val));
   const grid=tc('--chart-grid'), txt=tc('--chart-text'), ttBg=tc('--chart-tooltip-bg'), ttBd=tc('--chart-tooltip-border'), ttT=tc('--chart-tooltip-title'), ttB=tc('--chart-tooltip-body');
+  // Horizontal bars (indexAxis 'y') reveal with a left-to-right per-bar stagger.
+  const animKind = kind || (indexAxis==='y' ? 'bar' : 'generic');
   return {
     responsive:true, maintainAspectRatio:false, spanGaps, indexAxis,
-    animation:CHART_ANIMATION, transitions:CHART_TRANSITIONS,
+    animation:entranceAnim(animKind), transitions:CHART_TRANSITIONS,
     resizeDelay:120, devicePixelRatio:CHART_DPR, normalized:true,
     interaction:{ mode:'index', intersect:false },
     plugins:{
@@ -1237,15 +1409,183 @@ function darkOpts({ yPfx='', indexAxis='x', spanGaps=false }={}) {
 function donutOpts() {
   const txt=tc('--chart-text'), ttBg=tc('--chart-tooltip-bg'), ttBd=tc('--chart-tooltip-border'), ttT=tc('--chart-tooltip-title'), ttB=tc('--chart-tooltip-body');
   return {
-    responsive:true, maintainAspectRatio:false, cutout:'62%',
-    animation:CHART_ANIMATION, transitions:CHART_TRANSITIONS,
+    responsive:true, maintainAspectRatio:false, cutout:'64%',
+    animation:entranceAnim('donut'), transitions:CHART_TRANSITIONS,
     resizeDelay:120, devicePixelRatio:CHART_DPR, normalized:true,
+    elements:{ arc:{ borderRadius:5, hoverOffset:8, borderWidth:0 } },
     plugins:{
       legend:{ position:'bottom', labels:{ color:txt, boxWidth:10, font:{size:11}, padding:8 } },
       tooltip:{ backgroundColor:ttBg, borderColor:ttBd, borderWidth:1, titleColor:ttT, bodyColor:ttB },
       datalabels:{ formatter:(val,ctx)=>{ const total=ctx.dataset.data.reduce((a,b)=>a+b,0); return total>0?Math.round(val/total*100)+'%':''; }, color:'#fff', font:{weight:'bold',size:11} }
     }
   };
+}
+// Convert a hex color to an rgba() string at the given alpha.
+function hexToRgba(hex, a) {
+  let h = String(hex).replace('#','');
+  if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+  const n = parseInt(h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+// Scriptable backgroundColor returning a soft top→bottom gradient for area fills.
+function areaGradient(hex, topAlpha=0.30, botAlpha=0.015) {
+  return (context) => {
+    const chart = context.chart;
+    const area = chart.chartArea;
+    if (!area) return hexToRgba(hex, topAlpha); // layout not measured yet (first frame)
+    const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, hexToRgba(hex, topAlpha));
+    g.addColorStop(1, hexToRgba(hex, botAlpha));
+    return g;
+  };
+}
+
+// ── KPI sparklines ───────────────────────────────────────────────────────────
+// Build a tiny inline-SVG sparkline (gradient area + line) for a value series.
+function sparkSvg(values, color) {
+  const finite = values.filter(v => v != null && Number.isFinite(v));
+  if (finite.length < 2) return '';
+  const W = 100, H = 34, pad = 3;
+  const min = Math.min(...finite), max = Math.max(...finite);
+  const range = (max - min) || 1;
+  const n = values.length;
+  const xy = values.map((v, i) => ({
+    x: pad + (n > 1 ? i / (n - 1) : 0) * (W - 2 * pad),
+    y: (v == null || !Number.isFinite(v)) ? null : (H - pad) - ((v - min) / range) * (H - 2 * pad)
+  }));
+  let d = '', started = false;
+  xy.forEach(p => { if (p.y == null) { started = false; return; } d += (started ? ' L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); started = true; });
+  if (!d) return '';
+  const firstX = xy.find(p => p.y != null).x;
+  const lastX = [...xy].reverse().find(p => p.y != null).x;
+  const area = `${d} L${lastX.toFixed(1)} ${H} L${firstX.toFixed(1)} ${H} Z`;
+  const gid = 'sg' + Math.round(Math.random() * 1e9).toString(36);
+  const lineStyle = REDUCE_MOTION ? ' style="stroke-dasharray:none;stroke-dashoffset:0;animation:none"' : '';
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+    + `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">`
+    + `<stop offset="0" stop-color="${color}" stop-opacity="0.30"/>`
+    + `<stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`
+    + `<path d="${area}" fill="url(#${gid})"/>`
+    + `<path class="spark-line" pathLength="100" d="${d}" fill="none" stroke="${color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"${lineStyle}/>`
+    + `</svg>`;
+}
+// Per-month aggregates that back each KPI sparkline.
+function kpiMonthlySeries() {
+  const months = allMonths();
+  const agg = {};
+  months.forEach(m => agg[m] = { usd:0, rmb:0, orders:0, newC:0, countries:new Set(), onlineUSD:0, retUSD:0, ordSum:0, ordCnt:0 });
+  F.forEach(r => {
+    const a = agg[r.month]; if (!a) return;
+    a.usd += r.usd; a.rmb += r.rmb; a.orders++;
+    if (r.custType && r.custType.includes('新')) a.newC++;
+    if (r.country) a.countries.add(r.country);
+    if (r.channel && r.channel.includes('线上')) a.onlineUSD += r.usd;
+    if (r.custType && r.custType.includes('老')) a.retUSD += r.usd;
+    if (r.usd > 0) { a.ordSum += r.usd; a.ordCnt++; }
+  });
+  return months.map(m => { const a = agg[m]; return {
+    usd:a.usd, rmb:a.rmb, orders:a.orders, newC:a.newC, countries:a.countries.size,
+    avg: a.ordCnt ? a.ordSum / a.ordCnt : null,
+    onlinePct: a.usd > 0 ? a.onlineUSD / a.usd * 100 : null,
+    retPct: a.usd > 0 ? a.retUSD / a.usd * 100 : null
+  };});
+}
+const KPI_SPARKS = [
+  { id:'usd',       color:'--accent', f:m=>m.usd },
+  { id:'rmb',       color:'--g4',     f:m=>m.rmb },
+  { id:'orders',    color:'--g2',     f:m=>m.orders },
+  { id:'new',       color:'--g5',     f:m=>m.newC },
+  { id:'countries', color:'--g3',     f:m=>m.countries },
+  { id:'avg',       color:'#e3b341',  f:m=>m.avg },
+  { id:'online',    color:'#79c0ff',  f:m=>m.onlinePct },
+  { id:'ret',       color:'#56d364',  f:m=>m.retPct }
+];
+function renderKpiSparks() {
+  const series = kpiMonthlySeries();
+  KPI_SPARKS.forEach(cfg => {
+    const el = document.getElementById('spark-' + cfg.id);
+    if (!el) return;
+    const color = cfg.color.startsWith('--') ? (tc(cfg.color) || '#58a6ff') : cfg.color;
+    el.innerHTML = sparkSvg(series.map(cfg.f), color);
+  });
+}
+
+// ── Auto-generated executive insights ─────────────────────────────────────────
+// Computes a handful of plain-language headline findings from the filtered data.
+function renderInsights() {
+  const el = document.getElementById('insightStrip');
+  if (!el) return;
+  const zh = LANG === 'zh';
+  const months = allMonths();
+  const totalUSD = F.reduce((s, r) => s + r.usd, 0);
+  const mUsd = {};
+  F.forEach(r => { if (r.month) mUsd[r.month] = (mUsd[r.month] || 0) + r.usd; });
+  const cnUsd = {};
+  F.forEach(r => { if (r.country && r.usd > 0) cnUsd[r.country] = (cnUsd[r.country] || 0) + r.usd; });
+  const cnSorted = Object.entries(cnUsd).sort((a, b) => b[1] - a[1]);
+  const cards = [];
+
+  // 1 — Recent momentum: last N months vs the N months before them.
+  if (months.length >= 2 && totalUSD > 0) {
+    const seq = months.map(m => mUsd[m] || 0);
+    const win = Math.max(1, Math.min(3, Math.floor(seq.length / 2)));
+    const recent = seq.slice(-win).reduce((a, b) => a + b, 0);
+    const prior = seq.slice(-2 * win, -win).reduce((a, b) => a + b, 0);
+    const pct = prior > 0 ? (recent - prior) / prior * 100 : null;
+    const up = pct == null || pct >= 0;
+    cards.push({
+      ic: up ? '📈' : '📉', color: up ? 'var(--g2)' : 'var(--g3)',
+      title: zh ? '近期势头' : 'Recent Momentum',
+      metric: pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%',
+      desc: zh ? `最近 ${win} 个月 vs 前 ${win} 个月营收` : `Last ${win} mo vs prior ${win} mo`
+    });
+  }
+
+  // 2 — Largest market by revenue + its share.
+  if (cnSorted.length) {
+    const [c, v] = cnSorted[0];
+    const share = totalUSD > 0 ? v / totalUSD * 100 : 0;
+    cards.push({
+      ic: '🌍', color: 'var(--accent)',
+      title: zh ? '最大市场' : 'Top Market',
+      metric: c,
+      desc: `$${fmt(Math.round(v))} · ${share.toFixed(0)}% ${zh ? '营收占比' : 'of revenue'}`
+    });
+  }
+
+  // 3 — Peak revenue month.
+  const bestMonth = Object.entries(mUsd).sort((a, b) => b[1] - a[1])[0];
+  if (bestMonth) {
+    cards.push({
+      ic: '🏆', color: 'var(--g5)',
+      title: zh ? '最佳月份' : 'Peak Month',
+      metric: monthLabel(bestMonth[0]),
+      desc: `$${fmt(Math.round(bestMonth[1]))} ${zh ? '营收' : 'revenue'}`
+    });
+  }
+
+  // 4 — Revenue concentration in the top 5 markets.
+  if (cnSorted.length) {
+    const top5 = cnSorted.slice(0, 5).reduce((a, [, v]) => a + v, 0);
+    const share = totalUSD > 0 ? top5 / totalUSD * 100 : 0;
+    cards.push({
+      ic: '🎯', color: 'var(--g4)',
+      title: zh ? '市场集中度' : 'Market Concentration',
+      metric: share.toFixed(0) + '%',
+      desc: zh ? `前 5 大市场 · 共 ${cnSorted.length} 国` : `Top 5 of ${cnSorted.length} markets`
+    });
+  }
+
+  if (!cards.length) { el.innerHTML = ''; return; }
+  el.innerHTML = cards.map((c, i) =>
+    `<div class="insight" style="--ic:${c.color};animation-delay:${(0.05 * i + 0.05).toFixed(2)}s">`
+    + `<div class="insight-ic">${c.ic}</div>`
+    + `<div class="insight-body">`
+    + `<div class="insight-title">${escHtml(c.title)}</div>`
+    + `<div class="insight-metric" title="${escHtml(c.metric)}">${escHtml(c.metric)}</div>`
+    + `<div class="insight-desc">${escHtml(c.desc)}</div>`
+    + `</div></div>`
+  ).join('');
 }
 
 // ── KPIs ─────────────────────────────────────────────────────────────────────
@@ -1298,9 +1638,10 @@ function renderKPIs() {
   setDelta('k-avg-delta',       pctDelta(avg, pAvg));
   setDelta('k-online-delta',    ppDelta(onlinePct, pOnlinePct), ' pp');
   setDelta('k-ret-delta',       ppDelta(retPct, pRetPct), ' pp');
+
+  renderKpiSparks();
 }
 function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
-const REDUCE_MOTION = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 function animateNumber(id, target, formatter, duration) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -1383,7 +1724,7 @@ function renderCurrentMonthAnalysis() {
 
   document.getElementById('currentMonthTop5').innerHTML = ranked.length ? ranked.map((d,i)=>`
     <div class="prog-row">
-      <div class="prog-lbl" title="${escHtml(d.name)}">${i+1}. ${escHtml(d.name)}</div>
+      <div class="prog-lbl" title="${escHtml(spName(d.name))}">${i+1}. ${spHtml(d.name)}</div>
       <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(3, d.usd/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
       <div class="prog-val">$${fmt(d.usd)}</div>
     </div>
@@ -1391,7 +1732,7 @@ function renderCurrentMonthAnalysis() {
 
   const champion = ranked[0];
   if (champion) {
-    set('currentChampionName', champion.name);
+    setSp('currentChampionName', champion.name);
     set('currentChampionValue', `$${fmt(champion.usd)} · ${champion.orders} ${t('ordersUnit')}`);
     set('currentChampionOrders', `${displayMonth(month)}`);
   } else {
@@ -1413,7 +1754,7 @@ function renderCurrentMonthAnalysis() {
   }
 
   if (growth) {
-    set('growthStarName', growth.name);
+    setSp('growthStarName', growth.name);
     set('growthStarValue', `$${fmt(growth.usd)} · +$${fmt(growth.delta)}`);
     set('growthStarDelta', growth.pct == null ? t('newThisMonth') : `+${Math.round(growth.pct)}% ${t('mom')}`);
   } else {
@@ -1497,14 +1838,14 @@ function renderTrend() {
     data:{
       labels: allLabels,
       datasets:[
-        { type:'bar', label: lbl,
-          data: valsPadded, backgroundColor:'rgba(88,166,255,0.2)', borderColor:'#58a6ff', borderWidth:2, borderRadius:4, datalabels:{display:false} },
-        { type:'line', label: lbl, data: valsPadded, borderColor:'#58a6ff', backgroundColor:'transparent',
-          borderWidth:2, pointRadius:3, pointBackgroundColor:'#58a6ff', tension:0.4, datalabels:{display:false} },
+        { type:'line', label: lbl, data: valsPadded, borderColor:'#58a6ff',
+          backgroundColor: areaGradient('#58a6ff'), fill:true,
+          borderWidth:2.5, pointRadius:0, pointHoverRadius:5, pointBackgroundColor:'#58a6ff',
+          pointHoverBorderColor:'#fff', pointHoverBorderWidth:2, tension:0.4, datalabels:{display:false} },
         { type:'line', label: LANG==='zh'?'3个月移动平均':'3-Mo SMA', data: smaData,
           borderColor:'#f78166', backgroundColor:'transparent', borderDash:[5,5], borderWidth:2, pointRadius:0, tension:0.4, datalabels:{display:false} },
         { type:'line', label: t('forecastLabel'), data: forecastData, borderColor:'#9333ea', backgroundColor:'transparent',
-          borderWidth:2, borderDash:[3,3], pointRadius:3, pointBackgroundColor:'#9333ea', tension:0.3, datalabels:{display:false}, spanGaps:true }
+          borderWidth:2, borderDash:[3,3], pointRadius:3, pointHoverRadius:5, pointBackgroundColor:'#9333ea', tension:0.3, datalabels:{display:false}, spanGaps:true }
       ]
     },
     options: darkOpts({yPfx:pfx,spanGaps:true})
@@ -1644,7 +1985,7 @@ function renderDealScatter() {
   };
   opts.plugins.tooltip.callbacks.label = ctx => {
     const r = ctx.raw.raw;
-    return ` $${fmt(r.usd)} - ${r.salesperson} - ${r.country} (${r.date})`;
+    return ` $${fmt(r.usd)} - ${spName(r.salesperson)} - ${r.country} (${r.date})`;
   };
   const pointRadius = newPts.length + retPts.length > 700 ? 2 : newPts.length + retPts.length > 300 ? 3 : 4;
 
@@ -1674,8 +2015,8 @@ function renderCumulative() {
     CI.chartCumulative = new Chart(document.getElementById('chartCumulative'),{
       type:'line',
       data:{ labels:months.map(monthLabel), datasets:[{
-        label:t('cumulativeUSD')||'Cumulative USD', data:vals, borderColor:'#3fb950', backgroundColor:'rgba(63,185,80,0.1)',
-        fill:true, borderWidth:2, pointRadius:2, tension:0.4, datalabels:{display:false}
+        label:t('cumulativeUSD')||'Cumulative USD', data:vals, borderColor:'#3fb950', backgroundColor:areaGradient('#3fb950'),
+        fill:true, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, pointBackgroundColor:'#3fb950', tension:0.4, datalabels:{display:false}
       }]},
       options: darkOpts({yPfx:'$'})
     });
@@ -1831,8 +2172,8 @@ function renderAvgOrder() {
   CI.chartAvgOrder = new Chart(document.getElementById('chartAvgOrder'),{
     type:'line',
     data:{ labels:months.map(monthLabel), datasets:[{
-      label:t('avgOrder'), data:vals, borderColor:'#e3b341', backgroundColor:'rgba(227,179,65,0.1)',
-      fill:true, borderWidth:2, pointRadius:3, tension:0.4, spanGaps:true, datalabels:{display:false}
+      label:t('avgOrder'), data:vals, borderColor:'#e3b341', backgroundColor:areaGradient('#e3b341'),
+      fill:true, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, pointBackgroundColor:'#e3b341', tension:0.4, spanGaps:true, datalabels:{display:false}
     }]},
     options: darkOpts({yPfx:'$',spanGaps:true})
   });
@@ -1866,7 +2207,7 @@ function drawSpTable() {
   document.getElementById('spTableBody').innerHTML = spData.map((d,i)=>`
     <tr>
       <td>${medals[i]||i+1}</td>
-      <td><b>${d.name}</b></td>
+      <td><b>${spHtml(d.name)}</b></td>
       <td>${fmt(d.orders)}</td>
       <td style="color:var(--accent)"><b>$${fmt(d.usd)}</b></td>
       <td style="color:var(--g4)">¥${fmt(d.rmb)}</td>
@@ -1909,7 +2250,7 @@ function renderSpRevChart() {
        : d.usd
   }));
   entries.sort((a,b)=>b.val-a.val);
-  const labels = entries.map(e=>e.name);
+  const labels = entries.map(e=>spName(e.name));
   const vals   = entries.map(e=>e.val);
   const pfx    = mode==='usd'?'$':mode==='newpct'?'':'' ;
   dc('chartSpRev');
@@ -1946,7 +2287,7 @@ function renderSpCountries() {
   dc('chartSpCountries');
   CI.chartSpCountries = new Chart(document.getElementById('chartSpCountries'),{
     type:'bar',
-    data:{ labels:s.map(e=>e[0]), datasets:[{
+    data:{ labels:s.map(e=>spName(e[0])), datasets:[{
       label: LANG==='zh'?'覆盖国家':'Countries',
       data:s.map(e=>e[1]),
       backgroundColor:C.slice(0,s.length),
@@ -2026,7 +2367,7 @@ function renderBigOrders() {
   document.getElementById('bigOrdersBody').innerHTML = top20.map((r,i)=>`<tr>
     <td style="color:var(--muted)">${i<3?['🥇','🥈','🥉'][i]:i+1}</td>
     <td style="color:var(--muted)">${r.date}</td>
-    <td>${r.salesperson}</td>
+    <td>${spHtml(r.salesperson)}</td>
     <td>${r.country}</td>
     <td style="color:var(--accent);font-weight:700">$${fmt(r.usd,2)}</td>
     <td><span class="badge ${r.custType&&r.custType.includes('新')?'b-new':'b-old'}">${r.custType&&r.custType.includes('新')?t('badgeNew'):t('badgeReturn')}</span></td>
@@ -2057,7 +2398,7 @@ function renderSpTrend() {
     data:{
       labels: months.map(monthLabel),
       datasets: topSps.map((sp,i)=>({
-        label: sp,
+        label: spName(sp),
         data: months.map(m=>spMonthly[sp]?.[m]||0),
         borderColor: C[i%C.length],
         backgroundColor: 'transparent',
@@ -2093,7 +2434,7 @@ function renderWinRate() {
     data:{
       labels: months.map(monthLabel),
       datasets: topSps.map((sp,i)=>({
-        label: sp,
+        label: spName(sp),
         data: months.map(m=>{
           const d = spM[sp+'|'+m];
           return d && d.total>=2 ? Math.round(d.newC/d.total*100) : null;
@@ -2483,7 +2824,7 @@ function renderNewMktTable() {
     <td><b>${d.country}</b></td>
     <td>${d.orders}</td>
     <td style="color:var(--accent)">$${fmt(d.usd)}</td>
-    <td style="color:var(--muted)">${d.sp}</td>
+    <td style="color:var(--muted)">${spHtml(d.sp)}</td>
   </tr>`).join('');
 }
 
@@ -2495,6 +2836,12 @@ function toQuarter(month) {
   return y + '-Q' + q;
 }
 function qLabel(qk) { return qk; } // "2024-Q1"
+// Same quarter, one year earlier: "2025-Q2" -> "2024-Q2" (for 同比 / YoY comparison).
+function prevYearQuarter(qk) {
+  if(!qk) return null;
+  const [y, q] = qk.split('-');
+  return (Number(y) - 1) + '-' + q;
+}
 function allQuarters() {
   return [...new Set(F.map(r=>toQuarter(r.month)).filter(Boolean))].sort();
 }
@@ -2528,21 +2875,30 @@ function renderQtrKPIs() {
     return `<div class="kpi-delta ${cls}">${arrow} ${Math.abs(pct)}% vs ${prev}</div>`;
   }
   const zh = LANG==='zh';
+  const pyKey = prevYearQuarter(last);     // same quarter, prior year (同比 baseline)
+  const py = agg[pyKey] || null;
+  function yoy(curV, pyV) {
+    if(!py || pyV==null || !(pyV>0)) return '';
+    const pct = Math.round((curV-pyV)/pyV*100);
+    const cls = pct>=0?'up':'down';
+    const arrow = pct>=0?'↑':'↓';
+    return `<div class="kpi-delta ${cls}">${arrow} ${Math.abs(pct)}% ${zh?'同比':'YoY'} ${pyKey}</div>`;
+  }
   document.getElementById('qtrKpiGrid').innerHTML = `
     <div class="kpi" style="--ca:var(--accent)">
       <div class="kpi-label">${last} ${zh?'美元营收':'USD Revenue'}</div>
       <div class="kpi-val">$${fmt(cur.usd)}</div>
-      ${delta(cur.usd, prv?.usd)}
+      <div class="kpi-deltas">${delta(cur.usd, prv?.usd)}${yoy(cur.usd, py?.usd)}</div>
     </div>
     <div class="kpi" style="--ca:var(--g4)">
       <div class="kpi-label">${last} ${zh?'人民币营收':'RMB Revenue'}</div>
       <div class="kpi-val">¥${fmt(cur.rmb)}</div>
-      ${delta(cur.rmb, prv?.rmb)}
+      <div class="kpi-deltas">${delta(cur.rmb, prv?.rmb)}${yoy(cur.rmb, py?.rmb)}</div>
     </div>
     <div class="kpi" style="--ca:var(--g2)">
       <div class="kpi-label">${last} ${zh?'订单数':'Orders'}</div>
       <div class="kpi-val">${fmt(cur.orders)}</div>
-      ${delta(cur.orders, prv?.orders)}
+      <div class="kpi-deltas">${delta(cur.orders, prv?.orders)}${yoy(cur.orders, py?.orders)}</div>
     </div>
     <div class="kpi" style="--ca:var(--g5)">
       <div class="kpi-label">${last} ${zh?'新客占比':'New Customer %'}</div>
@@ -2552,7 +2908,7 @@ function renderQtrKPIs() {
     <div class="kpi" style="--ca:#e3b341">
       <div class="kpi-label">${last} ${zh?'均价（美元）':'Avg Order (USD)'}</div>
       <div class="kpi-val">$${cur.orders?fmt(cur.usd/(F.filter(r=>toQuarter(r.month)===last&&r.usd>0).length||1)):0}</div>
-      ${delta(cur.usd/(cur.orders||1), prv?.usd/(prv?.orders||1))}
+      <div class="kpi-deltas">${delta(cur.usd/(cur.orders||1), prv?.usd/(prv?.orders||1))}${yoy(cur.usd/(cur.orders||1), py?(py.usd/(py.orders||1)):null)}</div>
     </div>
   `;
 }
@@ -2647,6 +3003,45 @@ function renderQtrYoY() {
   });
 }
 
+// ── Quarterly YoY Growth (同比) ───────────────────────────────────────────────
+// Each quarter vs the SAME quarter one year earlier — USD revenue % change.
+function renderQtrYoYGrowth() {
+  const qtrs = allQuarters();
+  const agg  = qtrAgg();
+  const labels = []; const vals = []; const colors = [];
+  qtrs.forEach(q => {
+    const prev = agg[prevYearQuarter(q)]?.usd;
+    if(!(prev > 0)) return; // no same-quarter-last-year baseline → not comparable
+    const cur = agg[q]?.usd || 0;
+    labels.push(q);
+    vals.push(+((cur - prev) / prev * 100).toFixed(1));
+    colors.push(cur >= prev ? 'rgba(63,185,80,0.7)' : 'rgba(247,129,102,0.7)');
+  });
+  dc('chartQtrYoYGrowth');
+  CI.chartQtrYoYGrowth = new Chart(document.getElementById('chartQtrYoYGrowth'),{
+    type:'bar',
+    data:{ labels, datasets:[{
+      label: LANG==='zh'?'同比增长%':'YoY Growth %',
+      data:vals, backgroundColor:colors, borderRadius:4,
+      datalabels:{ anchor:'end', align: ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'top':'bottom',
+        color:tc('--chart-text'), font:{size:11}, formatter:val=>(val>=0?'+':'')+val+'%' }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:tc('--chart-tooltip-bg'), borderColor:tc('--chart-tooltip-border'), borderWidth:1, titleColor:tc('--chart-tooltip-title'), bodyColor:tc('--chart-tooltip-body'),
+          callbacks:{ label: ctx=>{ const v=ctx.parsed.y; return ' '+(LANG==='zh'?'同比':'YoY')+': '+(v>=0?'+':'')+v+'%'; } } },
+        datalabels:{}
+      },
+      scales:{
+        x:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}} },
+        y:{ grid:{color:tc('--chart-grid')}, ticks:{color:tc('--chart-text'),font:{size:11}, callback:val=>val+'%' } }
+      }
+    }
+  });
+}
+
 // ── Quarterly Customer Mix ────────────────────────────────────────────────────
 function renderQtrCust() {
   const qtrs = allQuarters();
@@ -2697,7 +3092,7 @@ function renderQtrSp() {
     data:{
       labels: qtrs.map(qLabel),
       datasets: topSps.map((sp,i)=>({
-        label: sp,
+        label: spName(sp),
         data: qtrs.map(q=> agg[q]?.sps[sp]||0),
         backgroundColor: C[i%C.length]+'cc',
         borderRadius: 1,
@@ -2723,6 +3118,7 @@ function renderQtrTable() {
     <th>${zh?'新客占比':'New %'}</th>
     <th>${zh?'线上占比':'Online %'}</th>
     <th>${zh?'环比增长':'QoQ Growth'}</th>
+    <th>${zh?'同比增长':'YoY Growth'}</th>
   </tr>`;
 
   let prevUSD = null;
@@ -2738,6 +3134,12 @@ function renderQtrTable() {
       const pct = Math.round((d.usd-prevUSD)/prevUSD*100);
       qoq = `<span class="kpi-delta ${pct>=0?'up':'down'}" style="margin:0">${pct>=0?'↑':'↓'} ${Math.abs(pct)}%</span>`;
     }
+    let yoy = '—';
+    const pyUSD = agg[prevYearQuarter(q)]?.usd;
+    if(pyUSD>0) {
+      const pct = Math.round((d.usd-pyUSD)/pyUSD*100);
+      yoy = `<span class="kpi-delta ${pct>=0?'up':'down'}" style="margin:0">${pct>=0?'↑':'↓'} ${Math.abs(pct)}%</span>`;
+    }
     prevUSD = d.usd;
     return `<tr>
       <td><b>${q}</b></td>
@@ -2748,6 +3150,7 @@ function renderQtrTable() {
       <td><span class="badge ${newPct>=50?'b-new':'b-old'}">${newPct}%</span></td>
       <td><span class="badge ${onPct>=50?'b-on':'b-off'}">${onPct}%</span></td>
       <td>${qoq}</td>
+      <td>${yoy}</td>
     </tr>`;
   }).join('');
 }
@@ -2770,7 +3173,7 @@ function renderHeatmap() {
   }
   const thead = `<tr><th>Salesperson</th>${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}</tr>`;
   const tbody = salespeople.map(sp=>
-    `<tr><td class="sp-name">${sp}</td>${months.map(m=>{ const v=map[sp+'|'+m]||0; return `<td style="${heatColor(v)}">${v>=1000?(v/1000).toFixed(0)+'K':v?fmt(v):''}</td>`; }).join('')}</tr>`
+    `<tr><td class="sp-name">${spHtml(sp)}</td>${months.map(m=>{ const v=map[sp+'|'+m]||0; return `<td style="${heatColor(v)}">${v>=1000?(v/1000).toFixed(0)+'K':v?fmt(v):''}</td>`; }).join('')}</tr>`
   ).join('');
   document.getElementById('hmWrap').innerHTML = `<table class="hm"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
@@ -2807,7 +3210,7 @@ function drawCnTable() {
       <td>$${fmt(d.avg)}</td>
       <td><span class="badge ${d.newPct>=50?'b-new':'b-old'}">${d.newPct}%</span></td>
       <td><span class="badge ${d.onlinePct>=50?'b-on':'b-off'}">${d.onlinePct}%</span></td>
-      <td style="color:var(--muted)">${d.topSp}</td>
+      <td style="color:var(--muted)">${spHtml(d.topSp)}</td>
     </tr>`).join('');
   const cnHds = document.querySelectorAll('#cnTable thead th');
   const cnHdKeys=['cnColRank','cnColCountry','cnColOrders','cnColUSD','cnColAvg','cnColNew','cnColOnline','cnColTopSp'];
@@ -2939,19 +3342,20 @@ function renderOrderTable() {
   document.getElementById('tableBody').innerHTML = sorted.map(r=>`
     <tr>
       <td style="color:var(--muted)">${r.date}</td>
-      <td>${r.salesperson}</td>
+      <td>${spHtml(r.salesperson)}</td>
       <td>${r.country}</td>
       <td style="color:var(--accent)">${r.usd>0?'$'+fmt(r.usd,2):'—'}</td>
       <td style="color:var(--g4)">${r.rmb>0?'¥'+fmt(r.rmb,2):'—'}</td>
       <td><span class="badge ${r.custType&&r.custType.includes('新')?'b-new':'b-old'}">${r.custType&&r.custType.includes('新')?t('badgeNew'):t('badgeReturn')}</span></td>
       <td><span class="badge ${r.channel&&r.channel.includes('线上')?'b-on':'b-off'}">${r.channel&&r.channel.includes('线上')?t('badgeOnline'):t('badgeOffline')}</span></td>
       <td style="color:var(--muted)">${r.store}</td>
-      <td style="color:var(--muted);font-size:12px">${r.operator||r.source||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${escHtml(spName(r.operator||r.source))||'—'}</td>
       <td>${recordActions(r)}</td>
     </tr>`).join('');
 }
 
 function recordActions(record) {
+  if (!IS_ADMIN) return '<span style="color:var(--muted)">-</span>';
   if (!record.id) return '<span style="color:var(--muted)">-</span>';
   return `<div class="row-actions">
     <button class="inline-btn" onclick="showEditRecordModal(${Number(record.id)})">${t('editBtn')}</button>
@@ -2978,6 +3382,7 @@ const T = {
     kpiOnline: 'Online Revenue %', kpiRet: 'Returning Customer Rev %',
     trendTitle: 'Monthly Revenue Trend', trendSub: 'Revenue and order volume over time',
     tabUSD:'USD', tabRMB:'RMB', tabOrders:'Orders',
+    insightsSec:'Executive Insights',
     currentMonthSec:'Current Month Analysis',
     currentTopTitle:'This Month Sales Top 5',
     currentChampionTitle:'Monthly Sales Champion',
@@ -3016,6 +3421,7 @@ const T = {
     qRevTitle:'Quarterly Revenue', qRevSub:'USD & RMB per quarter',
     qGrowthTitle:'Quarter-over-Quarter Growth', qGrowthSub:'USD revenue % change',
     qYoyTitle:'Same Quarter Year-over-Year', qYoySub:'Compare Q1/Q2/Q3/Q4 across years',
+    qYoyGrowthTitle:'Quarterly YoY Growth', qYoyGrowthSub:'USD revenue vs same quarter last year',
     qCustTitle:'Quarterly Customer Mix', qCustSub:'New vs Returning by quarter',
     qChanTitle:'Quarterly Channel Mix', qChanSub:'Online vs Offline USD per quarter',
     qSpTitle:'Quarterly Revenue by Salesperson', qSpSub:'Stacked USD contribution per quarter',
@@ -3057,6 +3463,12 @@ const T = {
     editBtn: 'Edit', deleteBtn: 'Delete', deleteConfirm: 'Delete this sales record?',
     adminTokenPrompt: 'Enter the sales admin token to update data:',
     adminTokenRequired: 'Admin token is required to update sales data.',
+    departedTip: 'Former employee (resigned)',
+    adminRevealPrompt: 'Enter the admin key to reveal real names:',
+    adminRevealWrong: 'Incorrect key.',
+    adminOffLabel: '🔒 Real Names', adminOnLabel: '🔓 Real Names ✓',
+    adminOffTip: 'Enter the admin key to show real names',
+    adminOnTip: 'Admin mode — showing real names. Click to switch back to aliases.',
     tabAllTime: 'All-Time', tabYoY: 'YoY Overlay', tabAOV: 'AOV', tabAll: 'All', tabNew: 'New Customers',
     dealScatterTitle: 'Deal Size Distribution (Scatter)', dealScatterSub: 'Individual USD orders over time',
     storeChannelTitle: 'Store vs Channel Matrix', storeChannelSub: 'Online vs Offline USD per store',
@@ -3086,6 +3498,7 @@ const T = {
     kpiOnline: '线上营收占比', kpiRet: '老客户营收占比',
     trendTitle: '月度营收趋势', trendSub: '月度营收与订单量变化',
     tabUSD:'美元', tabRMB:'人民币', tabOrders:'订单数',
+    insightsSec:'核心洞察',
     currentMonthSec:'当月分析',
     currentTopTitle:'本月销量Top5',
     currentChampionTitle:'当月销量冠军',
@@ -3120,6 +3533,7 @@ const T = {
     qRevTitle:'季度营收', qRevSub:'每季度美元 & 人民币',
     qGrowthTitle:'季度环比增长', qGrowthSub:'美元营收环比变化',
     qYoyTitle:'同季度同比对比', qYoySub:'各年Q1/Q2/Q3/Q4对比',
+    qYoyGrowthTitle:'季度同比增长', qYoyGrowthSub:'美元营收 vs 去年同季度',
     qCustTitle:'季度客户结构', qCustSub:'每季度新老客户占比',
     qChanTitle:'季度渠道结构', qChanSub:'每季度线上/线下美元营收',
     qSpTitle:'季度业务员营收', qSpSub:'堆叠图 — 各业务员季度贡献',
@@ -3158,6 +3572,12 @@ const T = {
     editBtn: '编辑', deleteBtn: '删除', deleteConfirm: '确定删除这条销售记录吗？',
     adminTokenPrompt: '请输入销售管理令牌以更新数据：',
     adminTokenRequired: '需要管理令牌才能更新销售数据。',
+    departedTip: '已离职',
+    adminRevealPrompt: '请输入管理员秘钥以显示真实姓名：',
+    adminRevealWrong: '秘钥错误。',
+    adminOffLabel: '🔒 真实姓名', adminOnLabel: '🔓 真实姓名 ✓',
+    adminOffTip: '输入管理员秘钥可显示真实姓名',
+    adminOnTip: '管理员模式 — 正在显示真实姓名，点击切回花名。',
     tabAllTime: '全部时间', tabYoY: '年度同比叠加', tabAOV: '客单价', tabAll: '全部', tabNew: '新客户',
     dealScatterTitle: '订单金额分布（散点图）', dealScatterSub: '按时间分布的各单美元金额',
     storeChannelTitle: '店铺 vs 渠道矩阵', storeChannelSub: '各店铺线上与线下美元营收占比',
@@ -3242,6 +3662,7 @@ function applyLangToDOM() {
   document.querySelectorAll('[data-tkey]').forEach(el=>{
     el.textContent = l[el.dataset.tkey] || T.en[el.dataset.tkey] || el.textContent;
   });
+  updateAdminUI();
 }
 
 // ── Download buttons ──────────────────────────────────────────────────────────
