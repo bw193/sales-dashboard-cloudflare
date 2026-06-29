@@ -867,6 +867,10 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
       <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdTrendTitle">Monthly Revenue</div><div class="card-sub" data-t="spdTrendSub">USD revenue &amp; orders over time</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloTrend"></canvas></div></div>
       <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdCumTitle">Cumulative Revenue</div><div class="card-sub" data-t="spdCumSub">Running USD total over time</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloCum"></canvas></div></div>
     </div>
+    <div class="card mb">
+      <div class="card-hd"><div><div class="card-title" data-t="cumYearlyTitle">Yearly Cumulative Comparison</div><div class="card-sub" data-t="cumYearlySub">Cumulative USD by year — reset to $0 each January</div></div></div>
+      <div class="cw" style="height:260px"><canvas id="chartGSoloCumYr"></canvas></div>
+    </div>
     <div class="grid2">
       <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdQtrTitle">Quarterly Revenue</div><div class="card-sub" data-t="spdQtrSub">USD revenue by quarter</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloQtr"></canvas></div></div>
       <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdAovTitle">Avg Order Value Trend</div><div class="card-sub" data-t="spdAovSub">USD per order over time</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloAov"></canvas></div></div>
@@ -1174,6 +1178,11 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
     </div>
   </div>
 
+  <div class="card mb">
+    <div class="card-hd"><div><div class="card-title" data-t="cumYearlyTitle">Yearly Cumulative Comparison</div><div class="card-sub" data-t="cumYearlySub">Cumulative USD by year — reset to $0 each January</div></div></div>
+    <div class="cw" style="height:260px"><canvas id="chartSpdCumYr"></canvas></div>
+  </div>
+
   <div class="grid2">
     <div class="card">
       <div class="card-hd"><div><div class="card-title" data-t="spdQtrTitle">Quarterly Revenue</div><div class="card-sub" data-t="spdQtrSub">USD revenue by quarter</div></div></div>
@@ -1340,10 +1349,10 @@ const PAGE_CHARTS = Object.freeze({
   'page-growth': ['chartCustTrend','chartDealScatter','chartCumulative','chartOrderDist','chartPareto','chartSource','chartAvgOrder','chartSeason','chartDow','chartCumulativeYearly','chartGrowthRate','chartAvgByType'],
   'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrYoYGrowth','chartQtrCust','chartQtrChan','chartQtrSp'],
   'page-team': ['chartSpRev','chartSpCountries','chartSpTrend','chartWinRate'],
-  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins','chartGSoloTrend','chartGSoloCum','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'],
+  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins','chartGSoloTrend','chartGSoloCum','chartGSoloCumYr','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
   'page-orders': [],
-  'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow','chartSpdQtr','chartSpdVsTeam','chartSpdGrowth','chartSpdPareto']
+  'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdCumYr','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow','chartSpdQtr','chartSpdVsTeam','chartSpdGrowth','chartSpdPareto']
 });
 let SP_DETAIL = null; // 当前钻取的业务员（真实姓名），null = 不在画像页
 let SP_DETAIL_ORIGIN = null; // 进入画像页前的来源页 {id, tab}，用于「返回」
@@ -1399,7 +1408,7 @@ const GROUP_META = {
 const GROUP_IDS = ['G1', 'G2'];
 let GROUP_VIEW = 'G1'; // 小组分析当前视图：'G1' | 'G2'（单组独立分析，默认）| 'cmp'（对比，已弱化为次要）
 const GRP_CMP_CHARTS = ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'];
-const GRP_SOLO_CHARTS = ['chartGSoloTrend','chartGSoloCum','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'];
+const GRP_SOLO_CHARTS = ['chartGSoloTrend','chartGSoloCum','chartGSoloCumYr','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'];
 function spGroup(real) { return SP_GROUPS[String(real ?? '').trim()] || null; }
 function groupLabel(gid) { const m = GROUP_META[gid]; return (m ? (LANG === 'zh' ? m.zh : m.en) : '') || gid; }
 function setGroupView(v) { GROUP_VIEW = v; renderGroups(); }
@@ -3122,6 +3131,35 @@ function renderCumulativeYearly() {
   });
 }
 
+// 通用：从给定行集合构建「按年累计营收」折线数据（每年一条线，1月归零，x 轴 1–12 月）。
+// 供个人画像 / 单组分析复用，让不同年份的累计进度直接叠放对比。
+function cumulativeByYearData(rows, zh) {
+  const moNames = zh ? ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'] : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const yearMap = {}, maxMo = {};
+  rows.forEach(r => {
+    if (!r.year || !r.month) return;
+    const mi = parseInt(String(r.month).split('-')[1]) - 1;
+    if (isNaN(mi)) return;
+    (yearMap[r.year] = yearMap[r.year] || Array(12).fill(0))[mi] += r.usd;
+    if (mi > (maxMo[r.year] == null ? -1 : maxMo[r.year])) maxMo[r.year] = mi;
+  });
+  const colors = ['#58a6ff','#3fb950','#ffa657','#d2a8ff','#f78166','#79c0ff'];
+  const datasets = Object.keys(yearMap).sort().map((y, i) => {
+    let cum = 0;
+    const data = yearMap[y].map((v, idx) => { if (idx > maxMo[y]) return null; cum += v; return cum; });
+    const col = colors[i % colors.length];
+    return { label: String(y), data, borderColor: col, backgroundColor: col + '22', borderWidth: 2.5, pointRadius: 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true, fill: false, datalabels: { display: false } };
+  });
+  return { labels: moNames, datasets };
+}
+function cumulativeByYearOpts() {
+  const opts = darkOpts({ yPfx: '$' });
+  opts.plugins.legend.display = true;
+  opts.plugins.legend.labels = { color: tc('--chart-text'), boxWidth: 12, font: { size: 12 } };
+  opts.interaction = { mode: 'index', intersect: false };
+  return opts;
+}
+
 // ── Monthly Growth Rate ──────────────────────────────────────────────────────
 function renderGrowthRate() {
   const months = allMonths();
@@ -3964,6 +4002,10 @@ function renderGroupSolo(gid, d, s, totalUsd, monthsAll, zh) {
   dc('chartGSoloCum');
   CI.chartGSoloCum = new Chart(document.getElementById('chartGSoloCum'), { type:'line', data:{ labels: monthsAll.map(monthLabel), datasets:[{ label: zh ? '累计美元' : 'Cumulative USD', data: cum, borderColor: pc, backgroundColor: areaGradient(pc), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, datalabels:{ display:false } }] }, options: darkOpts({ yPfx:'$' }) });
 
+  // 按年累计营收（每年1月归零，多年叠放对比）
+  dc('chartGSoloCumYr');
+  CI.chartGSoloCumYr = new Chart(document.getElementById('chartGSoloCumYr'), { type:'line', data: cumulativeByYearData(rows, zh), options: cumulativeByYearOpts() });
+
   // 季度营收
   const qL = Object.keys(d.qUsd).sort();
   dc('chartGSoloQtr');
@@ -4500,7 +4542,7 @@ function renderSpDetail() {
     document.getElementById('spdKpiGrid').innerHTML =
       `<div class="kpi" style="grid-column:1/-1"><div class="kpi-label">${escHtml(zh ? '提示' : 'Note')}</div>`
       + `<div class="kpi-val" style="font-size:15px;color:var(--muted)">${escHtml(zh ? '请调整或重置筛选条件后查看' : 'Adjust or reset the filters to view')}</div></div>`;
-    ['chartSpdTrend', 'chartSpdCountries', 'chartSpdCust', 'chartSpdChannel', 'chartSpdCumulative', 'chartSpdRadar', 'chartSpdCustTrend', 'chartSpdAov', 'chartSpdDeal', 'chartSpdStore', 'chartSpdRank', 'chartSpdDow', 'chartSpdQtr', 'chartSpdVsTeam', 'chartSpdGrowth', 'chartSpdPareto'].forEach(dc);
+    ['chartSpdTrend', 'chartSpdCountries', 'chartSpdCust', 'chartSpdChannel', 'chartSpdCumulative', 'chartSpdCumYr', 'chartSpdRadar', 'chartSpdCustTrend', 'chartSpdAov', 'chartSpdDeal', 'chartSpdStore', 'chartSpdRank', 'chartSpdDow', 'chartSpdQtr', 'chartSpdVsTeam', 'chartSpdGrowth', 'chartSpdPareto'].forEach(dc);
     document.getElementById('spdInsights').innerHTML = '';
     document.getElementById('spdOrdersBody').innerHTML =
       `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
@@ -4689,6 +4731,10 @@ function renderSpDetail() {
     data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '累计美元' : 'Cumulative USD', data: cumVals, borderColor: '#3fb950', backgroundColor: areaGradient('#3fb950'), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, datalabels: { display: false } }] },
     options: darkOpts({ yPfx: '$' })
   });
+
+  // ── Cumulative revenue by year（按年累计营收，每年1月归零，多年叠放对比）──
+  dc('chartSpdCumYr');
+  CI.chartSpdCumYr = new Chart(document.getElementById('chartSpdCumYr'), { type: 'line', data: cumulativeByYearData(rows, zh), options: cumulativeByYearOpts() });
 
   // ── Individual vs Team radar（个人 vs 团队，归一化到团队最高值=100）──
   // allStats / metricKeys / teamAvg / teamMax 已在亮点区计算，此处复用
