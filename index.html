@@ -1086,6 +1086,25 @@ const SP_ALIASES = {
   '张琳':'观星客','朱雯梦':'凌云渡','陆浩杰':'飞羽卫','沈志芳':'凌波',
   '黄冰鑫':'尤川','陆雨冬':'陆小凤','庞宁':'白玉汤','周泓瑜':'千机变'
 };
+// 业务员 → 所属门店（权威映射）。数据里的 store 字段是逐单门店，未必等于业务员的团队归属店，
+// 故此处显式登记；表外业务员回退到其订单中出现最多的门店。
+const SP_STORES = {
+  // 外贸部 业务组
+  '刘露露':'jxctmm','李怡蕾':'jxctmm','张卜凡':'jxctmm',
+  '沈艳晨':'jxctm','张婷婷':'jxctm','陈慧':'jxctm'
+};
+// 业务员所属门店：优先权威映射；否则取其订单中最常出现的门店；都没有则空串。
+function spStore(real, rows) {
+  const name = String(real ?? '').trim();
+  if (SP_STORES[name]) return SP_STORES[name];
+  if (Array.isArray(rows) && rows.length) {
+    const c = {};
+    rows.forEach(r => { if (r.store) c[r.store] = (c[r.store] || 0) + 1; });
+    const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+    if (top) return top[0];
+  }
+  return '';
+}
 // 管理员秘钥：同一把钥匙既用于「显示真实姓名」，也用于「新增/编辑/删除」写操作。
 // 客户端只存 SHA-256 摘要做显隐校验（明文不落代码，仅告知管理员）；写操作由后端用
 // 同一明文校验 —— Cloudflare 环境变量 SALES_ADMIN_TOKEN 必须设为同一个明文值。
@@ -3591,13 +3610,12 @@ function spMetricsAll() {
   const m = {};
   F.forEach(r => {
     const s = r.salesperson; if (!s) return;
-    if (!m[s]) m[s] = { usd: 0, orders: 0, posSum: 0, posCnt: 0, newC: 0, cn: new Set(), mo: new Set() };
+    if (!m[s]) m[s] = { usd: 0, orders: 0, posSum: 0, posCnt: 0, newC: 0, cn: new Set() };
     const d = m[s];
     d.usd += r.usd; d.orders++;
     if (r.usd > 0) { d.posSum += r.usd; d.posCnt++; }
     if (r.custType && r.custType.includes('新')) d.newC++;
     if (r.country) d.cn.add(r.country);
-    if (r.month) d.mo.add(r.month);
   });
   const stats = {};
   Object.entries(m).forEach(([s, d]) => {
@@ -3605,7 +3623,7 @@ function spMetricsAll() {
       usd: d.usd, orders: d.orders,
       aov: d.posCnt ? d.posSum / d.posCnt : 0,
       newPct: d.orders ? d.newC / d.orders * 100 : 0,
-      countries: d.cn.size, activeMonths: d.mo.size
+      countries: d.cn.size
     };
   });
   return stats;
@@ -3684,9 +3702,10 @@ function renderSpDetail() {
   const totalSp = ranking.length;
   const monthsArr = [...months].sort();
   const span = monthsArr.length ? `${monthLabel(monthsArr[0])} – ${monthLabel(monthsArr[monthsArr.length - 1])}` : '—';
+  const store = spStore(real, rows);
   document.getElementById('spdMeta').textContent = zh
-    ? `按美元营收排名 #${rank || '—'} / ${totalSp} · 活跃 ${monthsArr.length} 个月 · ${span}`
-    : `Rank #${rank || '—'} of ${totalSp} by USD · ${monthsArr.length} active months · ${span}`;
+    ? `${store ? '门店 ' + store + ' · ' : ''}按美元营收排名 #${rank || '—'} / ${totalSp} · ${span}`
+    : `${store ? 'Store ' + store + ' · ' : ''}Rank #${rank || '—'} of ${totalSp} by USD · ${span}`;
 
   // KPI cards
   const kpis = [
@@ -3696,7 +3715,7 @@ function renderSpDetail() {
     { lab: zh ? '新客占比' : 'New Customer %', val: `${newPct}%`, ca: 'var(--g5)' },
     { lab: zh ? '覆盖国家' : 'Countries', val: fmt(countries.size), ca: 'var(--g3)' },
     { lab: zh ? '客单价（美元）' : 'Avg USD Order', val: `$${fmt(avg)}`, ca: '#e3b341' },
-    { lab: zh ? '活跃月数' : 'Active Months', val: fmt(monthsArr.length), ca: '#79c0ff' },
+    { lab: zh ? '所属门店' : 'Store', val: store || '—', ca: '#79c0ff' },
     { lab: zh ? '综合排名' : 'Overall Rank', val: rank ? `#${rank}` : '—', ca: '#56d364' }
   ];
   document.getElementById('spdKpiGrid').innerHTML = kpis.map(k =>
@@ -3744,7 +3763,7 @@ function renderSpDetail() {
 
   // ── 团队对比统计（雷达图 + 亮点卡片共用）──
   const allStats = spMetricsAll();
-  const metricKeys = ['usd', 'orders', 'aov', 'newPct', 'countries', 'activeMonths'];
+  const metricKeys = ['usd', 'orders', 'aov', 'newPct', 'countries'];
   const sps = Object.keys(allStats);
   const teamAvg = {}, teamMax = {};
   metricKeys.forEach(k => {
@@ -3802,8 +3821,8 @@ function renderSpDetail() {
 
   // ── Individual vs Team radar（个人 vs 团队，归一化到团队最高值=100）──
   // allStats / metricKeys / teamAvg / teamMax 已在亮点区计算，此处复用
-  const mine = allStats[real] || { usd, orders, aov: avg, newPct, countries: countries.size, activeMonths: monthsArr.length };
-  const radarLabels = [zh ? '营收' : 'Revenue', zh ? '订单' : 'Orders', zh ? '客单价' : 'AOV', zh ? '新客%' : 'New %', zh ? '国家' : 'Countries', zh ? '活跃月' : 'Months'];
+  const mine = allStats[real] || { usd, orders, aov: avg, newPct, countries: countries.size };
+  const radarLabels = [zh ? '营收' : 'Revenue', zh ? '订单' : 'Orders', zh ? '客单价' : 'AOV', zh ? '新客%' : 'New %', zh ? '国家' : 'Countries'];
   const normArr = obj => metricKeys.map(k => teamMax[k] > 0 ? Math.round(obj[k] / teamMax[k] * 100) : 0);
   const fmtMetric = (k, v) => (k === 'usd' || k === 'aov') ? '$' + fmt(Math.round(v)) : (k === 'newPct') ? Math.round(v) + '%' : fmt(Math.round(v));
   const radTxt = tc('--chart-text'), radGrid = tc('--chart-grid');
