@@ -195,15 +195,64 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 .sp-profile-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
 .sp-badge-active{display:inline-block;font-size:10.5px;font-weight:600;color:var(--g2);background:rgba(34,197,94,.13);padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
 .btn-back{cursor:pointer;margin-bottom:6px}
-/* group analysis page — two head-to-head group panels */
-.grp-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.grp-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:var(--shadow-sm)}
-.grp-name{font-size:17px;font-weight:700;letter-spacing:-0.01em}
-.grp-meta{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
-.grp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:9px}
-.grp-kpi{background:var(--surface2);border-radius:10px;padding:9px 11px}
-.grp-kpi-l{font-size:10.5px;color:var(--muted);margin-bottom:3px;white-space:nowrap}
+/* ── Group Analysis — head-to-head "versus" treatment ───────────────────────── */
+.grp-vs-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
+@media(max-width:760px){.grp-vs-wrap{grid-template-columns:1fr;gap:14px}}
+.grp-panel{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 20px 18px;box-shadow:var(--shadow-sm);
+  transition:border-color .25s ease,transform .35s var(--ease-spring),box-shadow .35s var(--ease-spring);
+  animation:grpPanelIn .6s var(--ease-spring) both}
+.grp-panel.g2{animation-delay:.09s}
+.grp-panel:hover{transform:translate3d(0,-4px,0);box-shadow:var(--hover-shadow);border-color:color-mix(in srgb,var(--gc) 55%,var(--border))}
+.grp-panel.leader{border-color:color-mix(in srgb,var(--gc) 45%,var(--border))}
+.grp-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0%,color-mix(in srgb,var(--gc) 15%,transparent),transparent 58%);pointer-events:none}
+.grp-panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gc),transparent);background-size:200% 100%;animation:grpAccent 3.4s linear infinite}
+.grp-panel>*{position:relative}
+.grp-hd{display:flex;align-items:center;gap:13px;margin-bottom:2px}
+.grp-avatar{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;position:relative;
+  background:linear-gradient(140deg,var(--gc),color-mix(in srgb,var(--gc) 58%,#000));box-shadow:0 6px 16px color-mix(in srgb,var(--gc) 38%,transparent)}
+.grp-avatar::after{content:'';position:absolute;inset:-5px;border-radius:18px;border:2px solid color-mix(in srgb,var(--gc) 55%,transparent);opacity:0;animation:grpRing 2.8s var(--ease-out-cubic) infinite}
+.grp-name{font-size:19px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
+.grp-crown{font-size:15px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:grpCrown 2.6s var(--ease-spring) infinite;transform-origin:bottom center}
+.grp-store{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gc);background:color-mix(in srgb,var(--gc) 14%,transparent);padding:2px 8px;border-radius:6px}
+.grp-meta{font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.55}
+.grp-hero{margin:15px 0 0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.grp-hero-v{font-size:30px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1;
+  background:linear-gradient(120deg,var(--text),var(--gc));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--gc)}
+.grp-hero-l{font-size:11px;color:var(--muted);font-weight:600}
+.grp-sharebar{height:6px;border-radius:6px;background:var(--surface2);overflow:hidden;margin:11px 0 2px}
+.grp-sharebar>i{display:block;height:100%;border-radius:6px;width:var(--w,0%);background:linear-gradient(90deg,var(--gc),color-mix(in srgb,var(--gc) 62%,#fff));animation:grpBar 1.05s var(--ease-out-cubic) both}
+.grp-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.grp-kpi{background:var(--surface2);border-radius:10px;padding:9px 10px;border:1px solid transparent;transition:border-color .2s ease,transform .2s var(--ease-spring),background-color .2s ease;animation:grpKpiIn .5s var(--ease-spring) both}
+.grp-kpi:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--gc) 40%,transparent);background:var(--surface)}
+.grp-kpi-l{font-size:10px;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grp-kpi-v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+/* central VS medallion */
+.grp-vs{align-self:center;display:flex;align-items:center;justify-content:center;animation:grpVsIn .7s var(--ease-spring) both;animation-delay:.18s}
+.grp-vs-badge{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;font-style:italic;color:var(--text);background:var(--surface);border:2px solid var(--border-strong);box-shadow:var(--shadow-sm);position:relative}
+.grp-vs-badge::before{content:'';position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(from 0deg,#58a6ff,#3fb950,#58a6ff);opacity:.2;animation:spin360 9s linear infinite;z-index:-1}
+@media(max-width:760px){.grp-vs-badge{width:42px;height:42px;font-size:15px}}
+/* head-to-head tug-of-war bars */
+.h2h{display:flex;flex-direction:column;gap:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow-sm);animation:fadeInUp .5s var(--ease-spring) both}
+.h2h-row{display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;gap:10px}
+.h2h-v{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;opacity:.72}
+.h2h-v.l{text-align:right;color:#58a6ff}.h2h-v.r{text-align:left;color:#3fb950}
+.h2h-v.win{opacity:1;font-size:14.5px}
+.h2h-label{font-size:10.5px;color:var(--muted);font-weight:600;text-align:center;text-transform:uppercase;letter-spacing:.04em}
+.h2h-track{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:4px;height:11px}
+.h2h-fill{height:100%;border-radius:5px;background:var(--surface2);position:relative;overflow:hidden}
+.h2h-fill>i{position:absolute;top:0;bottom:0;width:var(--w,0);border-radius:5px}
+.h2h-fill.l>i{right:0;background:linear-gradient(90deg,color-mix(in srgb,#58a6ff 50%,#000),#58a6ff);animation:h2hGrow 1.1s var(--ease-out-cubic) both}
+.h2h-fill.r>i{left:0;background:linear-gradient(90deg,#3fb950,color-mix(in srgb,#3fb950 50%,#000));animation:h2hGrow 1.1s var(--ease-out-cubic) both}
+/* group dot for tables */
+.grp-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
+@keyframes grpPanelIn{from{opacity:0;transform:translate3d(0,18px,0) scale(.985)}to{opacity:1;transform:none}}
+@keyframes grpVsIn{from{opacity:0;transform:scale(.4) rotate(-25deg)}to{opacity:1;transform:none}}
+@keyframes grpKpiIn{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:none}}
+@keyframes grpAccent{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes grpRing{0%{opacity:.55;transform:scale(.9)}70%{opacity:0;transform:scale(1.16)}100%{opacity:0}}
+@keyframes grpCrown{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-3px) rotate(7deg)}}
+@keyframes grpBar{from{width:0}}
+@keyframes h2hGrow{from{width:0}}
 
 /* Modal */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; opacity:0; transition:opacity .18s ease }
@@ -763,7 +812,10 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 <div class="page" id="page-groups">
 
   <div class="sec" data-t="grpKpiSec">Group Comparison</div>
-  <div class="grid2" id="grpSummary"></div>
+  <div class="grp-vs-wrap" id="grpSummary"></div>
+
+  <div class="sec sec-gap" data-t="grpH2HSec">Head to Head</div>
+  <div id="grpH2H"></div>
 
   <div class="sec sec-gap" data-t="grpHighlightsSec">Highlights</div>
   <div class="insights" id="grpInsights"></div>
@@ -781,6 +833,17 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 
   <div class="grid2">
     <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="grpQtrTitle">Quarterly Revenue</div><div class="card-sub" data-t="grpQtrSub">USD revenue per group by quarter</div></div></div>
+      <div class="cw" style="height:260px"><canvas id="chartGrpQtr"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="grpOrdersTitle">Monthly Orders by Group</div><div class="card-sub" data-t="grpOrdersSub">Order count per group over time</div></div></div>
+      <div class="cw" style="height:260px"><canvas id="chartGrpOrders"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
       <div class="card-hd"><div><div class="card-title" data-t="grpShareTitle">Revenue Share</div><div class="card-sub" data-t="grpShareSub">USD split between groups</div></div></div>
       <div class="cw" style="height:260px"><canvas id="chartGrpShare"></canvas></div>
     </div>
@@ -792,12 +855,12 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 
   <div class="grid2">
     <div class="card">
-      <div class="card-hd"><div><div class="card-title" data-t="grpMembersTitle">Member Contribution</div><div class="card-sub" data-t="grpMembersSub">USD revenue by salesperson (click to view profile)</div></div></div>
-      <div class="cw" style="height:260px"><canvas id="chartGrpMembers"></canvas></div>
+      <div class="card-hd"><div><div class="card-title" data-t="grpNewTrendTitle">New Customer % Trend</div><div class="card-sub" data-t="grpNewTrendSub">Monthly new-customer share per group</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartGrpNewTrend"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-hd"><div><div class="card-title" data-t="grpOrdersTitle">Monthly Orders by Group</div><div class="card-sub" data-t="grpOrdersSub">Order count per group over time</div></div></div>
-      <div class="cw" style="height:260px"><canvas id="chartGrpOrders"></canvas></div>
+      <div class="card-hd"><div><div class="card-title" data-t="grpAovTrendTitle">Avg Order Value Trend</div><div class="card-sub" data-t="grpAovTrendSub">Monthly USD per order per group</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartGrpAovTrend"></canvas></div>
     </div>
   </div>
 
@@ -814,6 +877,22 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 
   <div class="grid2">
     <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="grpDealTitle">Order Size Distribution</div><div class="card-sub" data-t="grpDealSub">Deals by USD value bucket per group</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartGrpDeal"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="grpWinsTitle">Monthly Wins</div><div class="card-sub" data-t="grpWinsSub">Months each group led on USD</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartGrpWins"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-hd"><div><div class="card-title" data-t="grpMembersTitle">Member Contribution</div><div class="card-sub" data-t="grpMembersSub">USD revenue by salesperson (click to view profile)</div></div></div>
+    <div class="cw" style="height:300px"><canvas id="chartGrpMembers"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
       <div class="card-hd"><div><div class="card-title" data-t="grpCnG1Title">Top Markets — Group 1</div><div class="card-sub" data-t="grpCnG1Sub">USD revenue by country</div></div></div>
       <div class="cw" style="height:260px"><canvas id="chartGrpCnG1"></canvas></div>
     </div>
@@ -821,6 +900,11 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
       <div class="card-hd"><div><div class="card-title" data-t="grpCnG2Title">Top Markets — Group 2</div><div class="card-sub" data-t="grpCnG2Sub">USD revenue by country</div></div></div>
       <div class="cw" style="height:260px"><canvas id="chartGrpCnG2"></canvas></div>
     </div>
+  </div>
+
+  <div class="tw">
+    <div class="tw-hd"><div class="tw-hd-title" data-t="grpLeaderTitle">Member Leaderboard</div></div>
+    <div style="overflow-x:auto"><table id="grpLeaderTable"></table></div>
   </div>
 
   <div class="tw">
@@ -1140,7 +1224,7 @@ const PAGE_CHARTS = Object.freeze({
   'page-growth': ['chartCustTrend','chartDealScatter','chartCumulative','chartOrderDist','chartPareto','chartSource','chartAvgOrder','chartSeason','chartDow','chartCumulativeYearly','chartGrowthRate','chartAvgByType'],
   'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrYoYGrowth','chartQtrCust','chartQtrChan','chartQtrSp'],
   'page-team': ['chartSpRev','chartSpCountries','chartSpTrend','chartWinRate'],
-  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2'],
+  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
   'page-orders': [],
   'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow']
@@ -3636,16 +3720,30 @@ function recordActions(record) {
   </div>`;
 }
 
+// 数字滚动动画：从 0 缓动到目标值，用 fmtFn 格式化；尊重 prefers-reduced-motion。
+function animateCount(el, to, fmtFn, dur = 750) {
+  if (!el) return;
+  if (REDUCE_MOTION) { el.textContent = fmtFn(to); return; }
+  const start = performance.now();
+  const tick = now => {
+    const p = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    el.textContent = fmtFn(to * eased);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 // ── Group Analysis（小组分析：一组 vs 二组，在当前筛选集 F 上按小组聚合）─────────
 function renderGroups() {
   const zh = LANG === 'zh';
   const monthsAll = allMonths();
-  const CHARTS = ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2'];
+  const CHARTS = ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'];
   const colorOf = gid => GROUP_META[gid].color;
 
   // 每组聚合
   const init = () => ({ usd:0, rmb:0, orders:0, newC:0, ret:0, online:0, offline:0, posSum:0, posCnt:0,
-    countries:new Set(), members:{}, mUsd:{}, mOrd:{}, cnUsd:{} });
+    countries:new Set(), members:{}, mUsd:{}, mOrd:{}, cnUsd:{}, mNew:{}, mAovSum:{}, mAovCnt:{}, qUsd:{}, deal:[0,0,0,0,0] });
   const G = { G1: init(), G2: init() };
   F.forEach(r => {
     const gid = spGroup(r.salesperson); if (!gid) return;
@@ -3656,13 +3754,17 @@ function renderGroups() {
     if (isNew) d.newC++; if (isOld) d.ret++;
     if (r.channel && r.channel.includes('线上')) d.online++;
     if (r.channel && r.channel.includes('线下')) d.offline++;
-    if (r.usd > 0) { d.posSum += r.usd; d.posCnt++; }
+    if (r.usd > 0) { d.posSum += r.usd; d.posCnt++; const v = r.usd, bi = v < 1000 ? 0 : v < 5000 ? 1 : v < 10000 ? 2 : v < 50000 ? 3 : 4; d.deal[bi]++; }
     if (r.country) d.countries.add(r.country);
     if (r.country && r.usd > 0) d.cnUsd[r.country] = (d.cnUsd[r.country] || 0) + r.usd;
-    if (r.salesperson) d.members[r.salesperson] = (d.members[r.salesperson] || 0) + r.usd;
+    if (r.salesperson) { const mm = d.members[r.salesperson] || (d.members[r.salesperson] = { usd:0, orders:0, posSum:0, posCnt:0 }); mm.usd += r.usd; mm.orders++; if (r.usd > 0) { mm.posSum += r.usd; mm.posCnt++; } }
     if (r.month) {
       d.mUsd[r.month] = (d.mUsd[r.month] || 0) + r.usd;
       d.mOrd[r.month] = (d.mOrd[r.month] || 0) + 1;
+      if (isNew) d.mNew[r.month] = (d.mNew[r.month] || 0) + 1;
+      if (r.usd > 0) { d.mAovSum[r.month] = (d.mAovSum[r.month] || 0) + r.usd; d.mAovCnt[r.month] = (d.mAovCnt[r.month] || 0) + 1; }
+      const mp = r.month.split('-'); const q = Math.ceil((+mp[1]) / 3); const qk = `${mp[0]} Q${q}`;
+      d.qUsd[qk] = (d.qUsd[qk] || 0) + r.usd;
     }
   });
   const stat = gid => { const d = G[gid]; return {
@@ -3678,40 +3780,16 @@ function renderGroups() {
   if (S.G1.orders + S.G2.orders === 0) {
     document.getElementById('grpSummary').innerHTML =
       `<div class="card" style="grid-column:1/-1;color:var(--muted);font-size:14px">${escHtml(zh ? '当前筛选条件下暂无小组成员的数据，请调整或重置筛选。' : 'No group-member data under the current filters. Adjust or reset the filters.')}</div>`;
+    document.getElementById('grpH2H').innerHTML = '';
     document.getElementById('grpInsights').innerHTML = '';
+    document.getElementById('grpLeaderTable').innerHTML = '';
     document.getElementById('grpTable').innerHTML = '';
     CHARTS.forEach(dc);
     return;
   }
 
-  // ── 两个小组对比面板 ──
+  // ── 对比指标（领先方、差距、胜场、共同市场）先算，供面板 / 亮点 / 雷达共用 ──
   const sep = zh ? '、' : ', ';
-  document.getElementById('grpSummary').innerHTML = GROUP_IDS.map(gid => {
-    const m = GROUP_META[gid], s = S[gid];
-    const memberNames = Object.entries(G[gid].members).sort((a, b) => b[1] - a[1]).map(e => e[0]);
-    const share = totalUsd > 0 ? s.usd / totalUsd * 100 : 0;
-    const rows = [
-      [zh ? '美元营收' : 'USD Revenue', `$${fmt(s.usd)}`],
-      [zh ? '人民币营收' : 'RMB Revenue', `¥${fmt(s.rmb)}`],
-      [zh ? '订单数' : 'Orders', fmt(s.orders)],
-      [zh ? '客单价' : 'Avg USD', `$${fmt(s.aov)}`],
-      [zh ? '新客占比' : 'New %', `${Math.round(s.newPct)}%`],
-      [zh ? '覆盖国家' : 'Countries', fmt(s.countries)],
-      [zh ? '营收占比' : 'Rev Share', `${share.toFixed(1)}%`]
-    ];
-    return `<div class="card" style="border-top:3px solid ${m.color}">
-      <div class="grp-hd">
-        <div class="grp-avatar" style="background:${m.color}">${escHtml((zh ? m.zh : m.en).slice(0, 1))}</div>
-        <div>
-          <div class="grp-name">${escHtml(zh ? m.zh : m.en)}</div>
-          <div class="grp-meta">${escHtml(m.store)} · ${s.members} ${zh ? '人' : 'members'}<br>${memberNames.map(spHtml).join(sep)}</div>
-        </div>
-      </div>
-      <div class="grp-kpis">${rows.map(([k, vv]) => `<div class="grp-kpi"><div class="grp-kpi-l">${escHtml(k)}</div><div class="grp-kpi-v">${escHtml(vv)}</div></div>`).join('')}</div>
-    </div>`;
-  }).join('');
-
-  // ── Highlights（小组对比亮点）──
   const lead = S.G1.usd >= S.G2.usd ? 'G1' : 'G2';
   const lag = lead === 'G1' ? 'G2' : 'G1';
   const gap = Math.abs(S.G1.usd - S.G2.usd);
@@ -3720,15 +3798,71 @@ function renderGroups() {
   const newLead = S.G1.newPct >= S.G2.newPct ? 'G1' : 'G2';
   const cnLead = S.G1.countries >= S.G2.countries ? 'G1' : 'G2';
   let topM = null;
-  GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([n, u]) => { if (!topM || u > topM.u) topM = { n, u, gid }; }));
+  GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([n, mm]) => { if (!topM || mm.usd > topM.u) topM = { n, u: mm.usd, gid }; }));
+  let winG1 = 0, winG2 = 0;
+  monthsAll.forEach(mm => { const a = G.G1.mUsd[mm] || 0, b = G.G2.mUsd[mm] || 0; if (a === 0 && b === 0) return; if (a > b) winG1++; else if (b > a) winG2++; });
+  const sharedCn = [...G.G1.countries].filter(c => G.G2.countries.has(c)).length;
+
+  // ── 两个小组对比面板（VS 对决，带数字滚动 + 份额条）──
+  const panelHtml = gid => {
+    const m = GROUP_META[gid], s = S[gid];
+    const memberNames = Object.entries(G[gid].members).sort((a, b) => b[1].usd - a[1].usd).map(e => e[0]);
+    const share = totalUsd > 0 ? s.usd / totalUsd * 100 : 0;
+    const kpis = [
+      [zh ? '人民币营收' : 'RMB', `¥${fmt(s.rmb)}`],
+      [zh ? '订单数' : 'Orders', fmt(s.orders)],
+      [zh ? '客单价' : 'Avg USD', `$${fmt(s.aov)}`],
+      [zh ? '新客占比' : 'New %', `${Math.round(s.newPct)}%`],
+      [zh ? '覆盖国家' : 'Countries', fmt(s.countries)],
+      [zh ? '营收占比' : 'Share', `${share.toFixed(1)}%`]
+    ];
+    return `<div class="grp-panel ${gid === 'G2' ? 'g2' : ''} ${gid === lead ? 'leader' : ''}" style="--gc:${m.color}">
+      <div class="grp-hd">
+        <div class="grp-avatar">${escHtml((zh ? m.zh : m.en).slice(0, 1))}</div>
+        <div>
+          <div class="grp-name">${escHtml(zh ? m.zh : m.en)}${gid === lead ? `<span class="grp-crown" title="${escHtml(zh ? '营收领先' : 'Revenue leader')}">👑</span>` : ''}</div>
+          <div style="margin-top:5px"><span class="grp-store">${escHtml(m.store)}</span></div>
+        </div>
+      </div>
+      <div class="grp-hero"><span class="grp-hero-v" data-count="${s.usd}">$${fmt(s.usd)}</span><span class="grp-hero-l">${escHtml(zh ? '美元营收' : 'USD revenue')}</span></div>
+      <div class="grp-sharebar"><i style="--w:${share.toFixed(1)}%"></i></div>
+      <div class="grp-meta">${s.members} ${zh ? '名成员' : 'members'} · ${memberNames.map(spHtml).join(sep)}</div>
+      <div class="grp-kpis">${kpis.map(([k, vv], i) => `<div class="grp-kpi" style="animation-delay:${(0.2 + i * 0.05).toFixed(2)}s"><div class="grp-kpi-l">${escHtml(k)}</div><div class="grp-kpi-v">${escHtml(vv)}</div></div>`).join('')}</div>
+    </div>`;
+  };
+  document.getElementById('grpSummary').innerHTML = panelHtml('G1') + `<div class="grp-vs"><div class="grp-vs-badge">VS</div></div>` + panelHtml('G2');
+  document.querySelectorAll('#grpSummary [data-count]').forEach(el => animateCount(el, Number(el.getAttribute('data-count')) || 0, v => '$' + fmt(Math.round(v))));
+
+  // ── Head-to-Head 对比条（拔河式）──
+  const h2hMetrics = [
+    { k:'usd', label: zh ? '美元营收' : 'USD', f: v => '$' + fmt(Math.round(v)) },
+    { k:'rmb', label: zh ? '人民币' : 'RMB', f: v => '¥' + fmt(Math.round(v)) },
+    { k:'orders', label: zh ? '订单' : 'Orders', f: v => fmt(v) },
+    { k:'aov', label: zh ? '客单价' : 'AOV', f: v => '$' + fmt(Math.round(v)) },
+    { k:'newPct', label: zh ? '新客%' : 'New %', f: v => Math.round(v) + '%' },
+    { k:'countries', label: zh ? '国家' : 'Countries', f: v => fmt(v) }
+  ];
+  document.getElementById('grpH2H').innerHTML = `<div class="h2h">` + h2hMetrics.map(mt => {
+    const a = S.G1[mt.k], b = S.G2[mt.k], mx = Math.max(a, b) || 1, aWin = a >= b;
+    return `<div class="h2h-row">
+      <div class="h2h-v l ${aWin ? 'win' : ''}">${escHtml(mt.f(a))}</div>
+      <div class="h2h-label">${escHtml(mt.label)}</div>
+      <div class="h2h-v r ${!aWin ? 'win' : ''}">${escHtml(mt.f(b))}</div>
+      <div class="h2h-track"><div class="h2h-fill l"><i style="--w:${(a / mx * 100).toFixed(1)}%"></i></div><div class="h2h-fill r"><i style="--w:${(b / mx * 100).toFixed(1)}%"></i></div></div>
+    </div>`;
+  }).join('') + `</div>`;
+
+  // ── Highlights（小组对比亮点）──
   const cards = [
     { ic:'🏆', color:colorOf(lead), title: zh ? '营收领先' : 'Revenue Leader', metric: groupLabel(lead), desc: `$${fmt(S[lead].usd)} · ${(totalUsd > 0 ? S[lead].usd / totalUsd * 100 : 0).toFixed(1)}%` },
     { ic:'📊', color:'var(--g5)', title: zh ? '领先差距' : 'Revenue Gap', metric: gapPct == null ? '—' : `+${gapPct.toFixed(0)}%`, desc: `$${fmt(gap)} ${zh ? '领先' : 'ahead'}` },
-    { ic:'💳', color:'#e3b341', title: zh ? '客单价领先' : 'Higher AOV', metric: groupLabel(aovLead), desc: `$${fmt(S[aovLead].aov)} ${zh ? '客单价' : 'per order'}` },
+    { ic:'🥇', color:'#e3b341', title: zh ? '月度胜场' : 'Monthly Wins', metric: `${winG1} : ${winG2}`, desc: zh ? `${groupLabel('G1')} vs ${groupLabel('G2')} · 共 ${winG1 + winG2} 个月` : `${groupLabel('G1')} vs ${groupLabel('G2')} · ${winG1 + winG2} mo` },
+    { ic:'💳', color:'var(--accent)', title: zh ? '客单价领先' : 'Higher AOV', metric: groupLabel(aovLead), desc: `$${fmt(S[aovLead].aov)} ${zh ? '客单价' : 'per order'}` },
     { ic:'🌱', color:'var(--g2)', title: zh ? '新客获取领先' : 'New Acquisition', metric: groupLabel(newLead), desc: `${Math.round(S[newLead].newPct)}% ${zh ? '新客占比' : 'new'}` },
-    { ic:'🌍', color:'var(--g4)', title: zh ? '市场覆盖领先' : 'Wider Reach', metric: groupLabel(cnLead), desc: `${fmt(S[cnLead].countries)} ${zh ? '个国家' : 'countries'}` }
+    { ic:'🌍', color:'var(--g4)', title: zh ? '市场覆盖领先' : 'Wider Reach', metric: groupLabel(cnLead), desc: `${fmt(S[cnLead].countries)} ${zh ? '个国家' : 'countries'}` },
+    { ic:'🤝', color:'#79c0ff', title: zh ? '共同市场' : 'Shared Markets', metric: fmt(sharedCn), desc: zh ? '两组共同覆盖的国家' : 'countries served by both' }
   ];
-  if (topM) cards.push({ ic:'⭐', color:'var(--accent)', title: zh ? '最佳个人' : 'Top Performer', metric: spName(topM.n), desc: `${groupLabel(topM.gid)} · $${fmt(topM.u)}` });
+  if (topM) cards.push({ ic:'⭐', color:'#bc8cff', title: zh ? '最佳个人' : 'Top Performer', metric: spName(topM.n), desc: `${groupLabel(topM.gid)} · $${fmt(topM.u)}` });
   document.getElementById('grpInsights').innerHTML = cards.map((c, i) =>
     `<div class="insight" style="--ic:${c.color};animation-delay:${(0.04 * i + 0.04).toFixed(2)}s">`
     + `<div class="insight-ic">${c.ic}</div><div class="insight-body">`
@@ -3799,7 +3933,7 @@ function renderGroups() {
 
   // 5. 成员贡献（横向条，点击进入画像）
   const memberEntries = [];
-  GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([name, u]) => memberEntries.push({ name, u, gid })));
+  GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([name, mm]) => memberEntries.push({ name, u: mm.usd, gid })));
   memberEntries.sort((a, b) => b.u - a.u);
   const memOpts = darkOpts({ yPfx:'$', indexAxis:'y' });
   memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memberEntries[els[0].index]; if (e && !spDeparted(e.name)) showSpDetail(e.name); } };
@@ -3856,6 +3990,73 @@ function renderGroups() {
       options: darkOpts({ yPfx:'$', indexAxis:'y' })
     });
   });
+
+  // 11. 季度营收（按小组）
+  const qLabels = [...new Set([...Object.keys(G.G1.qUsd), ...Object.keys(G.G2.qUsd)])].sort();
+  dc('chartGrpQtr');
+  CI.chartGrpQtr = new Chart(document.getElementById('chartGrpQtr'), {
+    type:'bar',
+    data:{ labels: qLabels, datasets: GROUP_IDS.map(gid => ({
+      label: groupLabel(gid), data: qLabels.map(q => G[gid].qUsd[q] || 0),
+      backgroundColor: colorOf(gid), borderRadius:3, datalabels:{ display:false } })) },
+    options: darkOpts({ yPfx:'$' })
+  });
+
+  // 12. 新客占比趋势（按小组）
+  dc('chartGrpNewTrend');
+  CI.chartGrpNewTrend = new Chart(document.getElementById('chartGrpNewTrend'), {
+    type:'line',
+    data:{ labels: monthsAll.map(monthLabel), datasets: GROUP_IDS.map(gid => ({
+      label: groupLabel(gid), data: monthsAll.map(mm => { const o = G[gid].mOrd[mm] || 0; return o ? Math.round((G[gid].mNew[mm] || 0) / o * 100) : null; }),
+      borderColor: colorOf(gid), backgroundColor:'transparent', borderWidth:2.5, pointRadius:0, pointHoverRadius:5, tension:0.4, spanGaps:true, datalabels:{ display:false } })) },
+    options: darkOpts({ spanGaps:true })
+  });
+
+  // 13. 客单价趋势（按小组）
+  dc('chartGrpAovTrend');
+  CI.chartGrpAovTrend = new Chart(document.getElementById('chartGrpAovTrend'), {
+    type:'line',
+    data:{ labels: monthsAll.map(monthLabel), datasets: GROUP_IDS.map(gid => ({
+      label: groupLabel(gid), data: monthsAll.map(mm => G[gid].mAovCnt[mm] ? G[gid].mAovSum[mm] / G[gid].mAovCnt[mm] : null),
+      borderColor: colorOf(gid), backgroundColor:'transparent', borderWidth:2.5, pointRadius:0, pointHoverRadius:5, tension:0.4, spanGaps:true, datalabels:{ display:false } })) },
+    options: darkOpts({ yPfx:'$', spanGaps:true })
+  });
+
+  // 14. 订单金额分布（按小组）
+  const dealLabels = ['<$1K', '$1–5K', '$5–10K', '$10–50K', '≥$50K'];
+  dc('chartGrpDeal');
+  CI.chartGrpDeal = new Chart(document.getElementById('chartGrpDeal'), {
+    type:'bar',
+    data:{ labels: dealLabels, datasets: GROUP_IDS.map(gid => ({
+      label: groupLabel(gid), data: G[gid].deal, backgroundColor: colorOf(gid), borderRadius:3, datalabels:{ display:false } })) },
+    options: darkOpts({})
+  });
+
+  // 15. 月度胜场（按小组，环形）
+  dc('chartGrpWins');
+  CI.chartGrpWins = new Chart(document.getElementById('chartGrpWins'), {
+    type:'doughnut',
+    data:{ labels: GROUP_IDS.map(groupLabel), datasets:[{ data: [winG1, winG2],
+      backgroundColor: GROUP_IDS.map(colorOf), borderWidth:0,
+      datalabels:{ color:'#fff', font:{ weight:'bold', size:14 }, formatter: v => v || '' } }] },
+    options: donutOpts()
+  });
+
+  // ── Member Leaderboard 成员排行榜（跨两组按美元营收排名）──
+  const allMembers = [];
+  GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([n, mm]) => allMembers.push({ n, gid, usd: mm.usd, orders: mm.orders, aov: mm.posCnt ? mm.posSum / mm.posCnt : 0 })));
+  allMembers.sort((a, b) => b.usd - a.usd);
+  const lbCols = zh ? ['#', '成员', '小组', '美元营收', '订单', '客单价', '组内占比'] : ['#', 'Member', 'Group', 'USD', 'Orders', 'Avg USD', 'Group Share'];
+  const lbBody = allMembers.map((mm, i) => {
+    const groupUsd = S[mm.gid].usd, sh = groupUsd > 0 ? mm.usd / groupUsd * 100 : 0;
+    return `<tr>
+      <td>${i + 1}</td><td>${spHtml(mm.n)}</td>
+      <td><span class="grp-dot" style="background:${colorOf(mm.gid)}"></span>${escHtml(groupLabel(mm.gid))}</td>
+      <td>$${fmt(mm.usd)}</td><td>${fmt(mm.orders)}</td><td>$${fmt(mm.aov)}</td><td>${sh.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('grpLeaderTable').innerHTML =
+    `<thead><tr>${lbCols.map(c => `<th>${escHtml(c)}</th>`).join('')}</tr></thead><tbody>${lbBody}</tbody>`;
 
   // ── Group Scorecard 表（含合计行）──
   const cols = zh
@@ -4416,6 +4617,13 @@ const T = {
     grpCnG1Title: 'Top Markets — Group 1', grpCnG1Sub: 'USD revenue by country',
     grpCnG2Title: 'Top Markets — Group 2', grpCnG2Sub: 'USD revenue by country',
     grpScorecard: 'Group Scorecard',
+    grpH2HSec: 'Head to Head',
+    grpQtrTitle: 'Quarterly Revenue', grpQtrSub: 'USD revenue per group by quarter',
+    grpNewTrendTitle: 'New Customer % Trend', grpNewTrendSub: 'Monthly new-customer share per group',
+    grpAovTrendTitle: 'Avg Order Value Trend', grpAovTrendSub: 'Monthly USD per order per group',
+    grpDealTitle: 'Order Size Distribution', grpDealSub: 'Deals by USD value bucket per group',
+    grpWinsTitle: 'Monthly Wins', grpWinsSub: 'Months each group led on USD',
+    grpLeaderTitle: 'Member Leaderboard',
     adminRevealPrompt: 'Enter the admin key to reveal real names:',
     adminRevealWrong: 'Incorrect key.',
     adminOffLabel: '🔒 Real Names', adminOnLabel: '🔓 Real Names ✓',
@@ -4554,6 +4762,13 @@ const T = {
     grpCnG1Title: '主要市场 — 一组', grpCnG1Sub: '各国美元营收',
     grpCnG2Title: '主要市场 — 二组', grpCnG2Sub: '各国美元营收',
     grpScorecard: '小组评分表',
+    grpH2HSec: '正面交锋',
+    grpQtrTitle: '小组季度营收', grpQtrSub: '各小组季度美元营收',
+    grpNewTrendTitle: '新客占比趋势', grpNewTrendSub: '各小组每月新客占比',
+    grpAovTrendTitle: '客单价趋势', grpAovTrendSub: '各小组每月客单价',
+    grpDealTitle: '订单金额分布', grpDealSub: '各小组按金额区间订单数',
+    grpWinsTitle: '月度胜场', grpWinsSub: '各小组月度美元领先次数',
+    grpLeaderTitle: '成员排行榜',
     adminRevealPrompt: '请输入管理员秘钥以显示真实姓名：',
     adminRevealWrong: '秘钥错误。',
     adminOffLabel: '🔒 真实姓名', adminOnLabel: '🔓 真实姓名 ✓',
