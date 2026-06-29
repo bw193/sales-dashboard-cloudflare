@@ -184,6 +184,18 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 /* admin (real-name) mode indicator */
 #adminBtn.admin-on{background:linear-gradient(135deg,var(--g5),#f59e0b);border-color:transparent;color:#fff;font-weight:600}
 
+/* clickable active salesperson → opens profile drill-down */
+.sp-link{cursor:pointer;border-bottom:1px dotted color-mix(in srgb,var(--accent) 50%,transparent);transition:color .15s ease}
+.sp-link:hover{color:var(--accent)}
+.sp-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+/* salesperson profile (drill-down) page */
+.sp-profile-hd{display:flex;align-items:center;gap:14px;margin:4px 0 22px;flex-wrap:wrap}
+.sp-avatar{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--g4));flex-shrink:0;box-shadow:var(--shadow-sm)}
+.sp-profile-name{font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.15}
+.sp-profile-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.sp-badge-active{display:inline-block;font-size:10.5px;font-weight:600;color:var(--g2);background:rgba(34,197,94,.13);padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.btn-back{cursor:pointer;margin-bottom:6px}
+
 /* Modal */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; opacity:0; transition:opacity .18s ease }
 .modal-overlay.active { display:flex; opacity:1 }
@@ -876,6 +888,103 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
   </div>
 </div>
 
+<!-- ══════════ PAGE: SALESPERSON PROFILE (drill-down, not in nav) ══════════ -->
+<div class="page" id="page-spdetail">
+  <button class="btn btn-back" onclick="backFromSpDetail()" data-t="spBackBtn">← Back</button>
+  <div class="sp-profile-hd">
+    <div class="sp-avatar" id="spdAvatar">·</div>
+    <div>
+      <div class="sp-profile-name"><span id="spdName">—</span><span class="sp-badge-active" data-t="spActiveBadge">Active</span></div>
+      <div class="sp-profile-meta" id="spdMeta"></div>
+    </div>
+  </div>
+
+  <div class="sec" data-t="spdKpiSec">Performance Summary</div>
+  <div class="kpi-grid" id="spdKpiGrid"></div>
+
+  <div class="sec sec-gap" data-t="spdHighlightsSec">Highlights</div>
+  <div class="insights" id="spdInsights"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdTrendTitle">Monthly Revenue</div><div class="card-sub" data-t="spdTrendSub">USD revenue & orders over time</div></div></div>
+      <div class="cw" style="height:260px"><canvas id="chartSpdTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdCumTitle">Cumulative Revenue</div><div class="card-sub" data-t="spdCumSub">Running USD total over time</div></div></div>
+      <div class="cw" style="height:260px"><canvas id="chartSpdCumulative"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdRadarTitle">Individual vs Team</div><div class="card-sub" data-t="spdRadarSub">Normalized to team best (100)</div></div></div>
+      <div class="cw" style="height:280px"><canvas id="chartSpdRadar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdCnTitle">Top Markets</div><div class="card-sub" data-t="spdCnSub">USD revenue by country</div></div></div>
+      <div class="cw" style="height:280px"><canvas id="chartSpdCountries"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdCustTrendTitle">Customer Mix Trend</div><div class="card-sub" data-t="spdCustTrendSub">New vs returning orders per month</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdCustTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdAovTitle">Avg Order Value Trend</div><div class="card-sub" data-t="spdAovSub">USD per order over time</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdAov"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdCustTitle">Customer Mix</div><div class="card-sub" data-t="spdCustSub">New vs returning orders</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdCust"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdChanTitle">Channel Mix</div><div class="card-sub" data-t="spdChanSub">Online vs offline orders</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdChannel"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdDealTitle">Order Size Distribution</div><div class="card-sub" data-t="spdDealSub">Deals by USD value bucket</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdDeal"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdStoreTitle">Revenue by Store</div><div class="card-sub" data-t="spdStoreSub">USD revenue per store</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdStore"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdRankTitle">Monthly Rank Trend</div><div class="card-sub" data-t="spdRankSub">Team rank by USD per month (1 = best)</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdRank"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdDowTitle">Activity by Weekday</div><div class="card-sub" data-t="spdDowSub">Orders by day of week</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdDow"></canvas></div>
+    </div>
+  </div>
+
+  <div class="tw">
+    <div class="tw-hd"><div class="tw-hd-title" data-t="spdTopOrdersTitle">Top Orders</div></div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>#</th><th data-t="orderColDate">Date</th><th data-t="orderColCn">Country</th>
+          <th data-t="orderColUSD">USD</th><th data-t="orderColCust">Customer</th><th data-t="orderColChan">Channel</th>
+        </tr></thead>
+        <tbody id="spdOrdersBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <script>
@@ -952,8 +1061,11 @@ const PAGE_CHARTS = Object.freeze({
   'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrYoYGrowth','chartQtrCust','chartQtrChan','chartQtrSp'],
   'page-team': ['chartSpRev','chartSpCountries','chartSpTrend','chartWinRate'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
-  'page-orders': []
+  'page-orders': [],
+  'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow']
 });
+let SP_DETAIL = null; // 当前钻取的业务员（真实姓名），null = 不在画像页
+let SP_DETAIL_ORIGIN = null; // 进入画像页前的来源页 {id, tab}，用于「返回」
 const API_BASE = '/api/sales';
 let editingRecordId = null;
 let downloadButtonsQueued = false;
@@ -980,6 +1092,7 @@ const SP_ALIASES = {
 let IS_ADMIN = false;
 const ADMIN_KEY_HASH = '008d151819520b23fbe96f0d1ff8ad6521686b4a69bc1994f3db9af56782d584';
 const ADMIN_TOKEN_LS = 'sales_admin_token'; // 写操作令牌在 localStorage 的键名
+const ADMIN_FLAG_LS  = 'sp_admin';          // 管理员（真实姓名）模式标记，持久缓存于 localStorage
 
 // 显示文本：管理员→真实姓名；否则→花名，无花名（已离职）→真实姓名。不含 HTML。
 function spName(real) {
@@ -999,14 +1112,36 @@ function spHtml(real) {
   if (!name) return '';
   const shown = spName(name);
   if (spDeparted(name)) return `<span class="sp-off" title="${escHtml(t('departedTip'))}">${escHtml(shown)}</span>`;
-  return escHtml(shown);
+  // 在职业务员：可点击进入画像页（data-sp 存真实姓名，按真实姓名聚合）
+  return `<span class="sp-link" data-sp="${escHtml(name)}" role="button" tabindex="0" title="${escHtml(t('spViewProfile'))}">${escHtml(shown)}</span>`;
 }
 // 把业务员姓名写入指定元素的 textContent，并按需置灰（用于 KPI 数值元素）。
 function setSp(id, real) {
   const el = document.getElementById(id);
   if (!el) return;
   el.textContent = spName(real);
-  el.classList.toggle('sp-off', spDeparted(real));
+  const name = String(real ?? '').trim();
+  const departed = spDeparted(name);
+  el.classList.toggle('sp-off', departed);
+  if (name && !departed) {
+    el.classList.add('sp-link');
+    el.setAttribute('data-sp', name);
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.title = t('spViewProfile');
+  } else {
+    el.classList.remove('sp-link');
+    el.removeAttribute('data-sp');
+    el.removeAttribute('role');
+    el.removeAttribute('tabindex');
+    el.removeAttribute('title');
+  }
+}
+// 清除业务员链接态并显示占位符（用于"无数据/无冠军"场景，避免占位符仍可点击进入旧业务员）。
+function clearSp(id, placeholder = '—') {
+  setSp(id, '');          // 去掉 data-sp / role / tabindex / sp-link / title
+  const el = document.getElementById(id);
+  if (el) el.textContent = placeholder;
 }
 // ── 管理员模式切换 ────────────────────────────────────────────────────────────
 async function toggleAdmin() {
@@ -1036,11 +1171,12 @@ function setAdmin(on) {
   IS_ADMIN = !!on;
   try {
     if (on) {
-      sessionStorage.setItem('sp_admin', '1');
+      localStorage.setItem(ADMIN_FLAG_LS, '1'); // 持久缓存：跨会话/重开浏览器仍保持管理员模式
     } else {
-      sessionStorage.removeItem('sp_admin');
-      localStorage.removeItem(ADMIN_TOKEN_LS); // 退出管理员同时收回写授权
+      localStorage.removeItem(ADMIN_FLAG_LS);
+      localStorage.removeItem(ADMIN_TOKEN_LS);  // 退出管理员同时收回写授权
     }
+    sessionStorage.removeItem('sp_admin');      // 清理旧的 sessionStorage 残留
   } catch (e) {}
   // 业务员筛选项在花名/真实姓名间切换，重置以避免选中值失效
   const fsp = document.getElementById('fSp');
@@ -1070,7 +1206,15 @@ async function boot() {
     document.getElementById('loading').innerHTML = `<div style="color:var(--g3);text-align:center;max-width:460px;padding:30px"><b>Cloudflare database unavailable</b><br><br>The dashboard requires the Cloudflare D1 backend at <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">/api/sales</code>.</div>`;
     return;
   }
-  try { IS_ADMIN = sessionStorage.getItem('sp_admin') === '1'; } catch (e) {}
+  // 恢复管理员模式：优先读持久缓存（localStorage）；兼容旧的 sessionStorage 值
+  try {
+    IS_ADMIN = localStorage.getItem(ADMIN_FLAG_LS) === '1';
+    if (!IS_ADMIN && sessionStorage.getItem('sp_admin') === '1') {
+      IS_ADMIN = true;
+      localStorage.setItem(ADMIN_FLAG_LS, '1');
+      sessionStorage.removeItem('sp_admin');
+    }
+  } catch (e) {}
   updateAdminUI();
   updateLastUpdated();
   populateFilters();
@@ -1265,6 +1409,7 @@ async function deleteRecord(id) {
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 function showPage(id, el) {
+  if (id !== 'spdetail') SP_DETAIL = null; // 通过导航离开画像页时清除钻取状态
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -1358,6 +1503,8 @@ function renderAll() {
     renderNewMktTable();
   } else if(active === 'page-orders') {
     renderOrderTable();
+  } else if(active === 'page-spdetail') {
+    renderSpDetail();
   }
   scheduleDownloadButtons();
 }
@@ -1724,8 +1871,8 @@ function renderCurrentMonthAnalysis() {
 
   if (!month) {
     document.getElementById('currentMonthTop5').innerHTML = `<div style="color:var(--muted);font-size:13px">${t('noData')}</div>`;
-    set('currentChampionName', '—'); set('currentChampionValue', ''); set('currentChampionOrders', '');
-    set('growthStarName', '—'); set('growthStarValue', ''); set('growthStarDelta', '');
+    clearSp('currentChampionName'); set('currentChampionValue', ''); set('currentChampionOrders', '');
+    clearSp('growthStarName'); set('growthStarValue', ''); set('growthStarDelta', '');
     return;
   }
 
@@ -1736,7 +1883,7 @@ function renderCurrentMonthAnalysis() {
 
   document.getElementById('currentMonthTop5').innerHTML = ranked.length ? ranked.map((d,i)=>`
     <div class="prog-row">
-      <div class="prog-lbl" title="${escHtml(spName(d.name))}">${i+1}. ${spHtml(d.name)}</div>
+      <div class="prog-lbl">${i+1}. ${spHtml(d.name)}</div>
       <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(3, d.usd/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
       <div class="prog-val">$${fmt(d.usd)}</div>
     </div>
@@ -1748,7 +1895,7 @@ function renderCurrentMonthAnalysis() {
     set('currentChampionValue', `$${fmt(champion.usd)} · ${champion.orders} ${t('ordersUnit')}`);
     set('currentChampionOrders', `${displayMonth(month)}`);
   } else {
-    set('currentChampionName', '—'); set('currentChampionValue', ''); set('currentChampionOrders', '');
+    clearSp('currentChampionName'); set('currentChampionValue', ''); set('currentChampionOrders', '');
   }
 
   let growth = Object.values(current).map(d=>{
@@ -1770,7 +1917,7 @@ function renderCurrentMonthAnalysis() {
     set('growthStarValue', `$${fmt(growth.usd)} · +$${fmt(growth.delta)}`);
     set('growthStarDelta', growth.pct == null ? t('newThisMonth') : `+${Math.round(growth.pct)}% ${t('mom')}`);
   } else {
-    set('growthStarName', '—');
+    clearSp('growthStarName');
     set('growthStarValue', t('noPositiveGrowth'));
     set('growthStarDelta', prev ? displayMonth(prev) : '');
   }
@@ -3374,6 +3521,407 @@ function recordActions(record) {
   </div>`;
 }
 
+// ── Salesperson Profile (drill-down) ─────────────────────────────────────────
+// 点击在职业务员姓名 → 进入该业务员的画像分析页（按真实姓名在当前筛选集 F 上聚合）。
+function showSpDetail(real) {
+  const name = String(real ?? '').trim();
+  if (!name || spDeparted(name)) return; // 仅在职业务员可进入
+  // 记住来源页（从画像页内部不更新来源，避免覆盖）
+  const cur = document.querySelector('.page.active');
+  if (cur && cur.id !== 'page-spdetail') {
+    SP_DETAIL_ORIGIN = { id: cur.id.replace(/^page-/, ''), tab: document.querySelector('.nav-tab.active') };
+  }
+  SP_DETAIL = name;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.getElementById('page-spdetail').classList.add('active');
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+  renderAll();
+  // a11y：视图切换后焦点会塌陷到 <body>，将焦点移到「返回」按钮以保留键盘上下文
+  // （preventScroll 避免与上面的平滑滚动相互打架）
+  try { document.querySelector('#page-spdetail .btn-back')?.focus({ preventScroll: true }); } catch (e) {}
+}
+function backFromSpDetail() {
+  SP_DETAIL = null;
+  const o = SP_DETAIL_ORIGIN;
+  const tabs = document.querySelectorAll('.nav-tab');
+  if (o && o.tab && document.body.contains(o.tab)) showPage(o.id, o.tab); // 回到来源页
+  else showPage('team', tabs[3] || tabs[0]); // 兜底：团队表现页
+}
+function spdTrendOpts() {
+  const grid = tc('--chart-grid'), txt = tc('--chart-text');
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: entranceAnim('line'), transitions: CHART_TRANSITIONS,
+    resizeDelay: 120, devicePixelRatio: CHART_DPR, normalized: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: txt, boxWidth: 10, font: { size: 11 } } },
+      tooltip: { backgroundColor: tc('--chart-tooltip-bg'), borderColor: tc('--chart-tooltip-border'), borderWidth: 1, titleColor: tc('--chart-tooltip-title'), bodyColor: tc('--chart-tooltip-body') },
+      datalabels: { display: false }
+    },
+    scales: {
+      x: { grid: { color: grid }, ticks: { color: txt, font: { size: 11 } } },
+      y: { position: 'left', grid: { color: grid }, ticks: { color: txt, font: { size: 11 }, callback: v => '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v) } },
+      y1: { position: 'right', grid: { display: false }, ticks: { color: txt, font: { size: 11 }, precision: 0 } }
+    }
+  };
+}
+// 堆叠柱状图选项（用于画像页的客户结构趋势）。
+function spdStackedOpts() {
+  const grid = tc('--chart-grid'), txt = tc('--chart-text');
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: entranceAnim('bar'), transitions: CHART_TRANSITIONS,
+    resizeDelay: 120, devicePixelRatio: CHART_DPR, normalized: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: txt, boxWidth: 10, font: { size: 11 } } },
+      tooltip: { backgroundColor: tc('--chart-tooltip-bg'), borderColor: tc('--chart-tooltip-border'), borderWidth: 1, titleColor: tc('--chart-tooltip-title'), bodyColor: tc('--chart-tooltip-body') },
+      datalabels: { display: false }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: grid }, ticks: { color: txt, font: { size: 11 } } },
+      y: { stacked: true, grid: { color: grid }, ticks: { color: txt, font: { size: 11 }, precision: 0 } }
+    }
+  };
+}
+// 全体业务员在当前筛选集 F 上的指标（用于「个人 vs 团队」雷达对比）。
+function spMetricsAll() {
+  const m = {};
+  F.forEach(r => {
+    const s = r.salesperson; if (!s) return;
+    if (!m[s]) m[s] = { usd: 0, orders: 0, posSum: 0, posCnt: 0, newC: 0, cn: new Set(), mo: new Set() };
+    const d = m[s];
+    d.usd += r.usd; d.orders++;
+    if (r.usd > 0) { d.posSum += r.usd; d.posCnt++; }
+    if (r.custType && r.custType.includes('新')) d.newC++;
+    if (r.country) d.cn.add(r.country);
+    if (r.month) d.mo.add(r.month);
+  });
+  const stats = {};
+  Object.entries(m).forEach(([s, d]) => {
+    stats[s] = {
+      usd: d.usd, orders: d.orders,
+      aov: d.posCnt ? d.posSum / d.posCnt : 0,
+      newPct: d.orders ? d.newC / d.orders * 100 : 0,
+      countries: d.cn.size, activeMonths: d.mo.size
+    };
+  });
+  return stats;
+}
+function renderSpDetail() {
+  const real = SP_DETAIL;
+  if (!real) return;
+  const zh = LANG === 'zh';
+  const rows = F.filter(r => r.salesperson === real);
+  const shown = spName(real);
+
+  // header
+  document.getElementById('spdName').textContent = shown;
+  const av = document.getElementById('spdAvatar');
+  av.textContent = (shown || '·').slice(0, 1);
+  // a11y：给「返回」按钮一个含业务员名的 aria-label，让读屏用户知道当前所在画像
+  const _back = document.querySelector('#page-spdetail .btn-back');
+  if (_back) _back.setAttribute('aria-label', zh ? `返回，离开 ${shown} 的画像` : `Back, leaving ${shown}'s profile`);
+
+  // 空态：当前筛选（如业务员筛选切到他人、日期/国家范围排除）下该业务员无数据时，
+  // 显示明确提示而非一张全为 0、误导性的画像。同时销毁上一位业务员遗留的图表。
+  if (!rows.length) {
+    document.getElementById('spdMeta').textContent = zh
+      ? '当前筛选条件下暂无该业务员的数据' : 'No data for this salesperson under the current filters';
+    document.getElementById('spdKpiGrid').innerHTML =
+      `<div class="kpi" style="grid-column:1/-1"><div class="kpi-label">${escHtml(zh ? '提示' : 'Note')}</div>`
+      + `<div class="kpi-val" style="font-size:15px;color:var(--muted)">${escHtml(zh ? '请调整或重置筛选条件后查看' : 'Adjust or reset the filters to view')}</div></div>`;
+    ['chartSpdTrend', 'chartSpdCountries', 'chartSpdCust', 'chartSpdChannel', 'chartSpdCumulative', 'chartSpdRadar', 'chartSpdCustTrend', 'chartSpdAov', 'chartSpdDeal', 'chartSpdStore', 'chartSpdRank', 'chartSpdDow'].forEach(dc);
+    document.getElementById('spdInsights').innerHTML = '';
+    document.getElementById('spdOrdersBody').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
+    return;
+  }
+
+  // aggregate
+  let usd = 0, rmb = 0, newC = 0, ret = 0, online = 0, offline = 0, ordSum = 0, ordCnt = 0;
+  const orders = rows.length;
+  const countries = new Set(), months = new Set(), mUsd = {}, mOrd = {}, cnUsd = {};
+  const mNew = {}, mRet = {}, mAovSum = {}, mAovCnt = {}; // per-month new/returning & AOV
+  const stUsd = {};                                       // 各店铺营收
+  const dealBuckets = [0, 0, 0, 0, 0];                    // 订单金额分布：<1K /1–5K /5–10K /10–50K /≥50K
+  const dowCnt = [0, 0, 0, 0, 0, 0, 0];                   // 按星期几（0=周日…6=周六）统计订单数
+  let bigDeal = null;                                     // 最大单笔订单
+  rows.forEach(r => {
+    usd += r.usd; rmb += r.rmb;
+    const isNew = r.custType && r.custType.includes('新');
+    if (isNew) newC++;
+    if (r.custType && r.custType.includes('老')) ret++;
+    if (r.country) countries.add(r.country);
+    if (r.month) {
+      months.add(r.month);
+      mUsd[r.month] = (mUsd[r.month] || 0) + r.usd;
+      mOrd[r.month] = (mOrd[r.month] || 0) + 1;
+      if (isNew) mNew[r.month] = (mNew[r.month] || 0) + 1; else if (r.custType && r.custType.includes('老')) mRet[r.month] = (mRet[r.month] || 0) + 1;
+      if (r.usd > 0) { mAovSum[r.month] = (mAovSum[r.month] || 0) + r.usd; mAovCnt[r.month] = (mAovCnt[r.month] || 0) + 1; }
+    }
+    if (r.country && r.usd > 0) cnUsd[r.country] = (cnUsd[r.country] || 0) + r.usd;
+    if (r.store && r.usd > 0) stUsd[r.store] = (stUsd[r.store] || 0) + r.usd;
+    if (r.channel && r.channel.includes('线上')) online++;
+    if (r.channel && r.channel.includes('线下')) offline++;
+    if (r.usd > 0) {
+      ordSum += r.usd; ordCnt++; if (!bigDeal || r.usd > bigDeal.usd) bigDeal = r;
+      const v = r.usd, bi = v < 1000 ? 0 : v < 5000 ? 1 : v < 10000 ? 2 : v < 50000 ? 3 : 4;
+      dealBuckets[bi]++;
+    }
+    if (r.date) { const p = String(r.date).split('-'); if (p.length === 3) { const wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay(); if (!isNaN(wd)) dowCnt[wd]++; } }
+  });
+  const avg = ordCnt ? ordSum / ordCnt : 0;
+  const newPct = orders ? Math.round(newC / orders * 100) : 0;
+
+  // rank by USD among all salespeople in the current filter set
+  const spUsd = {};
+  F.forEach(r => { if (r.salesperson) spUsd[r.salesperson] = (spUsd[r.salesperson] || 0) + r.usd; });
+  const ranking = Object.entries(spUsd).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+  const rank = ranking.indexOf(real) + 1;
+  const totalSp = ranking.length;
+  const monthsArr = [...months].sort();
+  const span = monthsArr.length ? `${monthLabel(monthsArr[0])} – ${monthLabel(monthsArr[monthsArr.length - 1])}` : '—';
+  document.getElementById('spdMeta').textContent = zh
+    ? `按美元营收排名 #${rank || '—'} / ${totalSp} · 活跃 ${monthsArr.length} 个月 · ${span}`
+    : `Rank #${rank || '—'} of ${totalSp} by USD · ${monthsArr.length} active months · ${span}`;
+
+  // KPI cards
+  const kpis = [
+    { lab: zh ? '美元营收' : 'USD Revenue', val: `$${fmt(usd)}`, ca: 'var(--accent)' },
+    { lab: zh ? '人民币营收' : 'RMB Revenue', val: `¥${fmt(rmb)}`, ca: 'var(--g4)' },
+    { lab: zh ? '订单数' : 'Orders', val: fmt(orders), ca: 'var(--g2)' },
+    { lab: zh ? '新客占比' : 'New Customer %', val: `${newPct}%`, ca: 'var(--g5)' },
+    { lab: zh ? '覆盖国家' : 'Countries', val: fmt(countries.size), ca: 'var(--g3)' },
+    { lab: zh ? '客单价（美元）' : 'Avg USD Order', val: `$${fmt(avg)}`, ca: '#e3b341' },
+    { lab: zh ? '活跃月数' : 'Active Months', val: fmt(monthsArr.length), ca: '#79c0ff' },
+    { lab: zh ? '综合排名' : 'Overall Rank', val: rank ? `#${rank}` : '—', ca: '#56d364' }
+  ];
+  document.getElementById('spdKpiGrid').innerHTML = kpis.map(k =>
+    `<div class="kpi" style="--ca:${k.ca}"><div class="kpi-label">${escHtml(k.lab)}</div><div class="kpi-val">${escHtml(String(k.val))}</div></div>`
+  ).join('');
+
+  // monthly revenue + orders (dual axis)
+  const monthsAll = allMonths();
+  dc('chartSpdTrend');
+  CI.chartSpdTrend = new Chart(document.getElementById('chartSpdTrend'), {
+    data: {
+      labels: monthsAll.map(monthLabel),
+      datasets: [
+        { type: 'line', label: zh ? '美元营收' : 'USD', data: monthsAll.map(m => mUsd[m] || 0), borderColor: '#58a6ff', backgroundColor: areaGradient('#58a6ff'), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, yAxisID: 'y', datalabels: { display: false } },
+        { type: 'bar', label: zh ? '订单数' : 'Orders', data: monthsAll.map(m => mOrd[m] || 0), backgroundColor: 'rgba(63,185,80,0.35)', borderColor: '#3fb950', borderWidth: 1, borderRadius: 3, yAxisID: 'y1', datalabels: { display: false } }
+      ]
+    },
+    options: spdTrendOpts()
+  });
+
+  // top markets (horizontal bar)
+  const cn = Object.entries(cnUsd).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  dc('chartSpdCountries');
+  CI.chartSpdCountries = new Chart(document.getElementById('chartSpdCountries'), {
+    type: 'bar',
+    data: { labels: cn.map(e => e[0]), datasets: [{ label: zh ? '美元营收' : 'USD', data: cn.map(e => e[1]), backgroundColor: C.slice(0, cn.length), borderRadius: 4, datalabels: { display: false } }] },
+    options: darkOpts({ yPfx: '$', indexAxis: 'y' })
+  });
+
+  // customer mix donut
+  dc('chartSpdCust');
+  CI.chartSpdCust = new Chart(document.getElementById('chartSpdCust'), {
+    type: 'doughnut',
+    data: { labels: [t('newCustomer'), t('returning')], datasets: [{ data: [newC, ret], backgroundColor: ['#58a6ff', '#d2a8ff'], borderWidth: 0, datalabels: { color: '#fff', font: { weight: 'bold', size: 11 } } }] },
+    options: donutOpts()
+  });
+
+  // channel mix donut
+  dc('chartSpdChannel');
+  CI.chartSpdChannel = new Chart(document.getElementById('chartSpdChannel'), {
+    type: 'doughnut',
+    data: { labels: [t('online'), t('offline')], datasets: [{ data: [online, offline], backgroundColor: ['#3fb950', '#ffa657'], borderWidth: 0, datalabels: { color: '#fff', font: { weight: 'bold', size: 11 } } }] },
+    options: donutOpts()
+  });
+
+  // ── 团队对比统计（雷达图 + 亮点卡片共用）──
+  const allStats = spMetricsAll();
+  const metricKeys = ['usd', 'orders', 'aov', 'newPct', 'countries', 'activeMonths'];
+  const sps = Object.keys(allStats);
+  const teamAvg = {}, teamMax = {};
+  metricKeys.forEach(k => {
+    const vals = sps.map(s => allStats[s][k]);
+    teamAvg[k] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    teamMax[k] = vals.length ? Math.max(...vals) : 0;
+  });
+
+  // ── Highlights（个人亮点 insight 卡片）──
+  const dayNames = zh ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const cnSorted = Object.entries(cnUsd).sort((a, b) => b[1] - a[1]);
+  const bestMonthEntry = Object.entries(mUsd).sort((a, b) => b[1] - a[1])[0];
+  const totalTeamUsd = Object.values(spUsd).reduce((a, b) => a + b, 0);
+  const teamShare = totalTeamUsd > 0 ? usd / totalTeamUsd * 100 : 0;
+  const seq = monthsArr.map(mm => mUsd[mm] || 0);                 // 仅活跃月序列
+  const win = Math.max(1, Math.min(3, Math.floor(seq.length / 2)));
+  const recentSum = seq.slice(-win).reduce((a, b) => a + b, 0);
+  const priorSum = seq.slice(-2 * win, -win).reduce((a, b) => a + b, 0);
+  const moPct = priorSum > 0 ? (recentSum - priorSum) / priorSum * 100 : null;
+  const moUp = moPct != null && moPct >= 0;
+  const moIc = moPct == null ? '➖' : (moUp ? '📈' : '📉');          // 数据不足 → 中性
+  const moColor = moPct == null ? 'var(--muted)' : (moUp ? 'var(--g2)' : 'var(--g3)');
+  let busiestDow = -1, busiestCnt = -1;                          // 最活跃星期几
+  dowCnt.forEach((c, i) => { if (c > busiestCnt) { busiestCnt = c; busiestDow = i; } });
+  const teamAov = teamAvg.aov || 0;                              // 客单价 vs 团队均值
+  const aovDiff = teamAov > 0 ? (avg - teamAov) / teamAov * 100 : null;
+  const aovUp = aovDiff == null || aovDiff >= 0;
+  const cards = [];
+  if (bigDeal) cards.push({ ic: '💎', color: 'var(--accent)', title: zh ? '最大单笔' : 'Largest Deal', metric: `$${fmt(bigDeal.usd)}`, desc: `${bigDeal.country || '—'} · ${bigDeal.date || ''}` });
+  cards.push({ ic: moIc, color: moColor, title: zh ? '近期势头' : 'Recent Momentum', metric: moPct == null ? '—' : `${moPct >= 0 ? '+' : ''}${moPct.toFixed(1)}%`, desc: zh ? `近 ${win} 个月 vs 前 ${win} 个月` : `Last ${win} mo vs prior ${win} mo` });
+  if (bestMonthEntry) cards.push({ ic: '🏆', color: 'var(--g5)', title: zh ? '最佳月份' : 'Best Month', metric: monthLabel(bestMonthEntry[0]), desc: `$${fmt(Math.round(bestMonthEntry[1]))}` });
+  if (cnSorted.length) cards.push({ ic: '🌍', color: 'var(--g4)', title: zh ? '主战场' : 'Top Market', metric: cnSorted[0][0], desc: `$${fmt(Math.round(cnSorted[0][1]))} · ${(usd > 0 ? cnSorted[0][1] / usd * 100 : 0).toFixed(0)}%` });
+  cards.push({ ic: '🤝', color: '#79c0ff', title: zh ? '团队贡献' : 'Team Share', metric: `${teamShare.toFixed(1)}%`, desc: zh ? `团队营收占比 · 第 ${rank || '—'} 名` : `of team revenue · #${rank || '—'}` });
+  cards.push({ ic: '🔁', color: '#56d364', title: zh ? '新客获取' : 'New Acquisition', metric: `${newPct}%`, desc: zh ? `${newC} 新 · ${ret} 老` : `${newC} new · ${ret} returning` });
+  if (busiestCnt > 0) cards.push({ ic: '📅', color: '#bc8cff', title: zh ? '最活跃' : 'Busiest Day', metric: dayNames[busiestDow], desc: zh ? `${busiestCnt} 单` : `${busiestCnt} orders` });
+  cards.push({ ic: '⚖️', color: aovUp ? 'var(--g2)' : 'var(--g3)', title: zh ? '客单价 vs 团队' : 'AOV vs Team', metric: aovDiff == null ? '—' : `${aovDiff >= 0 ? '+' : ''}${aovDiff.toFixed(0)}%`, desc: zh ? `团队均价 $${fmt(Math.round(teamAov))}` : `Team avg $${fmt(Math.round(teamAov))}` });
+  document.getElementById('spdInsights').innerHTML = cards.map((c, i) =>
+    `<div class="insight" style="--ic:${c.color};animation-delay:${(0.04 * i + 0.04).toFixed(2)}s">`
+    + `<div class="insight-ic">${c.ic}</div>`
+    + `<div class="insight-body">`
+    + `<div class="insight-title">${escHtml(c.title)}</div>`
+    + `<div class="insight-metric" title="${escHtml(c.metric)}">${escHtml(c.metric)}</div>`
+    + `<div class="insight-desc">${escHtml(c.desc)}</div>`
+    + `</div></div>`
+  ).join('');
+
+  // ── Cumulative revenue（累计营收）──
+  let run = 0; const cumVals = monthsAll.map(mm => (run += (mUsd[mm] || 0)));
+  dc('chartSpdCumulative');
+  CI.chartSpdCumulative = new Chart(document.getElementById('chartSpdCumulative'), {
+    type: 'line',
+    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '累计美元' : 'Cumulative USD', data: cumVals, borderColor: '#3fb950', backgroundColor: areaGradient('#3fb950'), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, datalabels: { display: false } }] },
+    options: darkOpts({ yPfx: '$' })
+  });
+
+  // ── Individual vs Team radar（个人 vs 团队，归一化到团队最高值=100）──
+  // allStats / metricKeys / teamAvg / teamMax 已在亮点区计算，此处复用
+  const mine = allStats[real] || { usd, orders, aov: avg, newPct, countries: countries.size, activeMonths: monthsArr.length };
+  const radarLabels = [zh ? '营收' : 'Revenue', zh ? '订单' : 'Orders', zh ? '客单价' : 'AOV', zh ? '新客%' : 'New %', zh ? '国家' : 'Countries', zh ? '活跃月' : 'Months'];
+  const normArr = obj => metricKeys.map(k => teamMax[k] > 0 ? Math.round(obj[k] / teamMax[k] * 100) : 0);
+  const fmtMetric = (k, v) => (k === 'usd' || k === 'aov') ? '$' + fmt(Math.round(v)) : (k === 'newPct') ? Math.round(v) + '%' : fmt(Math.round(v));
+  const radTxt = tc('--chart-text'), radGrid = tc('--chart-grid');
+  dc('chartSpdRadar');
+  CI.chartSpdRadar = new Chart(document.getElementById('chartSpdRadar'), {
+    type: 'radar',
+    data: {
+      labels: radarLabels,
+      datasets: [
+        { label: shown, data: normArr(mine), borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.18)', borderWidth: 2, pointBackgroundColor: '#58a6ff', pointRadius: 3, datalabels: { display: false } },
+        { label: zh ? '团队平均' : 'Team Avg', data: normArr(teamAvg), borderColor: '#8b949e', backgroundColor: 'rgba(139,148,158,0.10)', borderWidth: 1.5, borderDash: [4, 3], pointBackgroundColor: '#8b949e', pointRadius: 2, datalabels: { display: false } }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: entranceAnim('generic'), transitions: CHART_TRANSITIONS, devicePixelRatio: CHART_DPR,
+      plugins: {
+        legend: { labels: { color: radTxt, boxWidth: 10, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: tc('--chart-tooltip-bg'), borderColor: tc('--chart-tooltip-border'), borderWidth: 1, titleColor: tc('--chart-tooltip-title'), bodyColor: tc('--chart-tooltip-body'),
+          callbacks: { label: ctx => { const k = metricKeys[ctx.dataIndex]; const raw = ctx.datasetIndex === 0 ? mine[k] : teamAvg[k]; return ` ${ctx.dataset.label}: ${fmtMetric(k, raw)}`; } }
+        },
+        datalabels: { display: false }
+      },
+      scales: { r: { min: 0, max: 100, angleLines: { color: radGrid }, grid: { color: radGrid }, pointLabels: { color: radTxt, font: { size: 11 } }, ticks: { display: false, stepSize: 25, backdropColor: 'transparent' } } }
+    }
+  });
+
+  // ── Customer mix trend（客户结构趋势，堆叠）──
+  dc('chartSpdCustTrend');
+  CI.chartSpdCustTrend = new Chart(document.getElementById('chartSpdCustTrend'), {
+    type: 'bar',
+    data: {
+      labels: monthsAll.map(monthLabel),
+      datasets: [
+        { label: t('newCustomer'), data: monthsAll.map(mm => mNew[mm] || 0), backgroundColor: '#58a6ff', borderRadius: 2, datalabels: { display: false } },
+        { label: t('returning'), data: monthsAll.map(mm => mRet[mm] || 0), backgroundColor: '#d2a8ff', borderRadius: 2, datalabels: { display: false } }
+      ]
+    },
+    options: spdStackedOpts()
+  });
+
+  // ── AOV trend（客单价趋势）──
+  dc('chartSpdAov');
+  CI.chartSpdAov = new Chart(document.getElementById('chartSpdAov'), {
+    type: 'line',
+    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '客单价' : 'AOV', data: monthsAll.map(mm => mAovCnt[mm] ? mAovSum[mm] / mAovCnt[mm] : null), borderColor: '#e3b341', backgroundColor: areaGradient('#e3b341'), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, spanGaps: true, datalabels: { display: false } }] },
+    options: darkOpts({ yPfx: '$', spanGaps: true })
+  });
+
+  // ── Order size distribution（订单金额分布直方图）──
+  const dealLabels = ['<$1K', '$1–5K', '$5–10K', '$10–50K', '≥$50K'];
+  dc('chartSpdDeal');
+  CI.chartSpdDeal = new Chart(document.getElementById('chartSpdDeal'), {
+    type: 'bar',
+    data: { labels: dealLabels, datasets: [{ label: zh ? '订单数' : 'Orders', data: dealBuckets, backgroundColor: ['#79c0ff', '#58a6ff', '#3fb950', '#e3b341', '#f78166'], borderRadius: 4, datalabels: { display: true, anchor: 'end', align: 'top', color: tc('--chart-text'), font: { size: 11 }, formatter: v => v || '' } }] },
+    options: darkOpts({})
+  });
+
+  // ── Revenue by store（各店铺营收，横向条）──
+  const st = Object.entries(stUsd).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  dc('chartSpdStore');
+  CI.chartSpdStore = new Chart(document.getElementById('chartSpdStore'), {
+    type: 'bar',
+    data: { labels: st.map(e => e[0]), datasets: [{ label: zh ? '美元营收' : 'USD', data: st.map(e => e[1]), backgroundColor: C.slice(0, st.length), borderRadius: 4, datalabels: { display: false } }] },
+    options: darkOpts({ yPfx: '$', indexAxis: 'y' })
+  });
+
+  // ── Monthly rank trend（每月团队排名，1 为最佳；纵轴反转）──
+  const monthTeam = {};
+  F.forEach(r => { if (!r.month || !r.salesperson) return; (monthTeam[r.month] = monthTeam[r.month] || {})[r.salesperson] = (monthTeam[r.month][r.salesperson] || 0) + r.usd; });
+  const rankSeries = monthsAll.map(mm => {
+    const tm = monthTeam[mm];
+    if (!tm || !(real in tm)) return null;
+    return Object.entries(tm).sort((a, b) => b[1] - a[1]).map(e => e[0]).indexOf(real) + 1;
+  });
+  const rkTxt = tc('--chart-text'), rkGrid = tc('--chart-grid');
+  dc('chartSpdRank');
+  CI.chartSpdRank = new Chart(document.getElementById('chartSpdRank'), {
+    type: 'line',
+    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '团队排名' : 'Team Rank', data: rankSeries, borderColor: '#bc8cff', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#bc8cff', pointHoverRadius: 5, tension: 0.3, spanGaps: true, datalabels: { display: false } }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: entranceAnim('line'), transitions: CHART_TRANSITIONS, devicePixelRatio: CHART_DPR,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: tc('--chart-tooltip-bg'), borderColor: tc('--chart-tooltip-border'), borderWidth: 1, titleColor: tc('--chart-tooltip-title'), bodyColor: tc('--chart-tooltip-body'), callbacks: { label: ctx => ` ${zh ? '排名' : 'Rank'}: #${ctx.parsed.y}` } },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: { grid: { color: rkGrid }, ticks: { color: rkTxt, font: { size: 11 } } },
+        y: { reverse: true, min: 1, suggestedMax: Math.max(2, totalSp), grid: { color: rkGrid }, ticks: { color: rkTxt, font: { size: 11 }, precision: 0, stepSize: 1, callback: v => '#' + v } }
+      }
+    }
+  });
+
+  // ── Activity by weekday（按星期几的订单数，周一→周日）──
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
+  dc('chartSpdDow');
+  CI.chartSpdDow = new Chart(document.getElementById('chartSpdDow'), {
+    type: 'bar',
+    data: { labels: dowOrder.map(i => dayNames[i]), datasets: [{ label: zh ? '订单数' : 'Orders', data: dowOrder.map(i => dowCnt[i]), backgroundColor: '#56d364', borderRadius: 4, datalabels: { display: true, anchor: 'end', align: 'top', color: tc('--chart-text'), font: { size: 11 }, formatter: v => v || '' } }] },
+    options: darkOpts({})
+  });
+
+  // top orders table
+  const top = rows.filter(r => r.usd > 0).sort((a, b) => b.usd - a.usd).slice(0, 10);
+  document.getElementById('spdOrdersBody').innerHTML = top.map((r, i) => `<tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td style="color:var(--muted)">${escHtml(r.date)}</td>
+      <td>${escHtml(r.country || '—')}</td>
+      <td style="color:var(--accent);font-weight:700">$${fmt(r.usd, 2)}</td>
+      <td><span class="badge ${r.custType && r.custType.includes('新') ? 'b-new' : 'b-old'}">${r.custType && r.custType.includes('新') ? t('badgeNew') : t('badgeReturn')}</span></td>
+      <td><span class="badge ${r.channel && r.channel.includes('线上') ? 'b-on' : 'b-off'}">${r.channel && r.channel.includes('线上') ? t('badgeOnline') : t('badgeOffline')}</span></td>
+    </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
+}
+
 // ── i18n ─────────────────────────────────────────────────────────────────────
 let LANG = 'zh';
 const T = {
@@ -3475,6 +4023,23 @@ const T = {
     adminTokenPrompt: 'Enter the admin key (the same key that reveals real names):',
     adminTokenRequired: 'Admin token is required to update sales data.',
     departedTip: 'Former employee (resigned)',
+    spViewProfile: 'View salesperson profile',
+    spBackBtn: '← Back', spActiveBadge: 'Active',
+    spdKpiSec: 'Performance Summary',
+    spdTrendTitle: 'Monthly Revenue', spdTrendSub: 'USD revenue & orders over time',
+    spdCnTitle: 'Top Markets', spdCnSub: 'USD revenue by country',
+    spdCustTitle: 'Customer Mix', spdCustSub: 'New vs returning orders',
+    spdChanTitle: 'Channel Mix', spdChanSub: 'Online vs offline orders',
+    spdTopOrdersTitle: 'Top Orders',
+    spdHighlightsSec: 'Highlights',
+    spdCumTitle: 'Cumulative Revenue', spdCumSub: 'Running USD total over time',
+    spdRadarTitle: 'Individual vs Team', spdRadarSub: 'Normalized to team best (100)',
+    spdCustTrendTitle: 'Customer Mix Trend', spdCustTrendSub: 'New vs returning orders per month',
+    spdAovTitle: 'Avg Order Value Trend', spdAovSub: 'USD per order over time',
+    spdDealTitle: 'Order Size Distribution', spdDealSub: 'Deals by USD value bucket',
+    spdStoreTitle: 'Revenue by Store', spdStoreSub: 'USD revenue per store',
+    spdRankTitle: 'Monthly Rank Trend', spdRankSub: 'Team rank by USD per month (1 = best)',
+    spdDowTitle: 'Activity by Weekday', spdDowSub: 'Orders by day of week',
     adminRevealPrompt: 'Enter the admin key to reveal real names:',
     adminRevealWrong: 'Incorrect key.',
     adminOffLabel: '🔒 Real Names', adminOnLabel: '🔓 Real Names ✓',
@@ -3584,6 +4149,23 @@ const T = {
     adminTokenPrompt: '请输入管理员秘钥（与显示真实姓名为同一把钥匙）：',
     adminTokenRequired: '需要管理令牌才能更新销售数据。',
     departedTip: '已离职',
+    spViewProfile: '查看业务员画像',
+    spBackBtn: '← 返回', spActiveBadge: '在职',
+    spdKpiSec: '业绩概览',
+    spdTrendTitle: '月度营收', spdTrendSub: '美元营收与订单量变化',
+    spdCnTitle: '主要市场', spdCnSub: '各国美元营收',
+    spdCustTitle: '客户结构', spdCustSub: '新客 vs 老客订单',
+    spdChanTitle: '渠道结构', spdChanSub: '线上 vs 线下订单',
+    spdTopOrdersTitle: '高额订单',
+    spdHighlightsSec: '个人亮点',
+    spdCumTitle: '累计营收', spdCumSub: '累计美元营收变化',
+    spdRadarTitle: '个人 vs 团队', spdRadarSub: '相对团队最高值归一化(100)',
+    spdCustTrendTitle: '客户结构趋势', spdCustTrendSub: '每月新老客订单',
+    spdAovTitle: '客单价趋势', spdAovSub: '每月客单价(美元)',
+    spdDealTitle: '订单金额分布', spdDealSub: '按金额区间的订单数',
+    spdStoreTitle: '各店铺营收', spdStoreSub: '各店铺美元营收',
+    spdRankTitle: '每月排名趋势', spdRankSub: '每月团队美元排名（1=最佳）',
+    spdDowTitle: '按星期活跃度', spdDowSub: '按星期几的订单数',
     adminRevealPrompt: '请输入管理员秘钥以显示真实姓名：',
     adminRevealWrong: '秘钥错误。',
     adminOffLabel: '🔒 真实姓名', adminOnLabel: '🔓 真实姓名 ✓',
@@ -3807,6 +4389,17 @@ function downloadCSVString(csv, title) {
   link.click();
   URL.revokeObjectURL(link.href);
 }
+
+// 事件委托：点击/回车在职业务员姓名 → 进入画像页
+document.addEventListener('click', (e) => {
+  const el = e.target.closest && e.target.closest('[data-sp]');
+  if (el) { e.preventDefault(); showSpDetail(el.getAttribute('data-sp')); }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest && e.target.closest('[data-sp]');
+  if (el) { e.preventDefault(); showSpDetail(el.getAttribute('data-sp')); }
+});
 
 boot();
 </script>
