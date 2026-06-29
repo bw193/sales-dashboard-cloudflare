@@ -270,6 +270,15 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 @keyframes grpCrown{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-3px) rotate(7deg)}}
 @keyframes grpBar{from{width:0}}
 @keyframes h2hGrow{from{width:0}}
+/* group view switcher (一组 / 二组 / 对比) */
+.grp-switch{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:4px;margin:2px 0 22px;box-shadow:var(--shadow-sm)}
+.grp-switch button{border:0;background:transparent;color:var(--muted);font-weight:600;font-size:13px;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;transition:color .2s ease,background-color .2s ease,box-shadow .2s ease,transform .2s var(--ease-spring)}
+.grp-switch button:hover{color:var(--text)}
+.grp-switch button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
+.grp-switch button:active{transform:scale(.97)}
+.grp-switch-dot{width:9px;height:9px;border-radius:50%;background:var(--sc,var(--muted));transition:box-shadow .2s ease}
+.grp-switch button.active .grp-switch-dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--sc) 28%,transparent)}
+.grp-switch-ic{font-size:13px;opacity:.85}
 
 /* Modal */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; opacity:0; transition:opacity .18s ease }
@@ -825,9 +834,72 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
   </div>
 </div>
 
-<!-- ══════════ PAGE: GROUP ANALYSIS（小组分析：一组 vs 二组）══════════ -->
+<!-- ══════════ PAGE: GROUP ANALYSIS（小组分析：每组独立分析 + 次要对比）══════════ -->
 <div class="page" id="page-groups">
 
+  <div class="grp-switch" id="grpSwitch">
+    <button type="button" onclick="setGroupView('G1')" data-gv="G1"><span class="grp-switch-dot"></span><span class="grp-switch-l">Group 1</span></button>
+    <button type="button" onclick="setGroupView('G2')" data-gv="G2"><span class="grp-switch-dot"></span><span class="grp-switch-l">Group 2</span></button>
+    <button type="button" onclick="setGroupView('cmp')" data-gv="cmp"><span class="grp-switch-ic">⚔</span><span class="grp-switch-l">Compare</span></button>
+  </div>
+
+  <!-- ── 单组独立分析（默认视图）── -->
+  <div id="grpSolo">
+    <div class="spd-hero" id="gSoloHero">
+      <div class="spd-hero-main">
+        <div class="sp-avatar" id="gSoloAvatar">·</div>
+        <div>
+          <div class="sp-profile-name"><span id="gSoloName">—</span></div>
+          <div class="sp-profile-meta" id="gSoloMeta"></div>
+          <div class="spd-chips" id="gSoloChips"></div>
+        </div>
+      </div>
+      <div class="spd-hero-stats" id="gSoloStats"></div>
+    </div>
+
+    <div class="sec" data-t="spdKpiSec">Performance Summary</div>
+    <div class="kpi-grid" id="gSoloKpi"></div>
+
+    <div class="sec sec-gap" data-t="grpSoloHi">Highlights</div>
+    <div class="insights" id="gSoloInsights"></div>
+
+    <div class="grid2">
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdTrendTitle">Monthly Revenue</div><div class="card-sub" data-t="spdTrendSub">USD revenue &amp; orders over time</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloTrend"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdCumTitle">Cumulative Revenue</div><div class="card-sub" data-t="spdCumSub">Running USD total over time</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloCum"></canvas></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdQtrTitle">Quarterly Revenue</div><div class="card-sub" data-t="spdQtrSub">USD revenue by quarter</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloQtr"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdAovTitle">Avg Order Value Trend</div><div class="card-sub" data-t="spdAovSub">USD per order over time</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloAov"></canvas></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdCustTitle">Customer Mix</div><div class="card-sub" data-t="spdCustSub">New vs returning orders</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloCust"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdChanTitle">Channel Mix</div><div class="card-sub" data-t="spdChanSub">Online vs offline orders</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloChannel"></canvas></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="grpNewTrendTitle">New Customer % Trend</div><div class="card-sub" data-t="grpNewTrendSub">Monthly new-customer share per group</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloNew"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdDowTitle">Activity by Weekday</div><div class="card-sub" data-t="spdDowSub">Orders by day of week</div></div></div><div class="cw" style="height:240px"><canvas id="chartGSoloDow"></canvas></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdCnTitle">Top Markets</div><div class="card-sub" data-t="spdCnSub">USD revenue by country</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloCn"></canvas></div></div>
+      <div class="card"><div class="card-hd"><div><div class="card-title" data-t="spdDealTitle">Order Size Distribution</div><div class="card-sub" data-t="spdDealSub">Deals by USD value bucket</div></div></div><div class="cw" style="height:260px"><canvas id="chartGSoloDeal"></canvas></div></div>
+    </div>
+    <div class="card mb">
+      <div class="card-hd"><div><div class="card-title" data-t="grpMembersTitle">Member Contribution</div><div class="card-sub" data-t="grpMembersSub">USD revenue by salesperson (click to view profile)</div></div></div>
+      <div class="cw" style="height:280px"><canvas id="chartGSoloMembers"></canvas></div>
+    </div>
+
+    <div class="tw">
+      <div class="tw-hd"><div class="tw-hd-title" data-t="grpLeaderTitle">Member Leaderboard</div></div>
+      <div style="overflow-x:auto"><table id="gSoloLeader"></table></div>
+    </div>
+    <div class="tw">
+      <div class="tw-hd"><div class="tw-hd-title" data-t="spdTopOrdersTitle">Top Orders</div></div>
+      <div style="overflow-x:auto"><table id="gSoloOrders"></table></div>
+    </div>
+  </div>
+
+  <!-- ── 小组对比（次要视图）── -->
+  <div id="grpCompare" style="display:none">
   <div class="sec" data-t="grpKpiSec">Group Comparison</div>
   <div class="grp-vs-wrap" id="grpSummary"></div>
 
@@ -928,6 +1000,7 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
     <div class="tw-hd"><div class="tw-hd-title" data-t="grpScorecard">Group Scorecard</div></div>
     <div style="overflow-x:auto"><table id="grpTable"></table></div>
   </div>
+  </div><!-- /#grpCompare -->
 </div>
 
 <!-- ══════════ PAGE: MARKET INTELLIGENCE ══════════ -->
@@ -1267,7 +1340,7 @@ const PAGE_CHARTS = Object.freeze({
   'page-growth': ['chartCustTrend','chartDealScatter','chartCumulative','chartOrderDist','chartPareto','chartSource','chartAvgOrder','chartSeason','chartDow','chartCumulativeYearly','chartGrowthRate','chartAvgByType'],
   'page-quarterly': ['chartQtrRev','chartQoQ','chartQtrYoY','chartQtrYoYGrowth','chartQtrCust','chartQtrChan','chartQtrSp'],
   'page-team': ['chartSpRev','chartSpCountries','chartSpTrend','chartWinRate'],
-  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'],
+  'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins','chartGSoloTrend','chartGSoloCum','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
   'page-orders': [],
   'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow','chartSpdQtr','chartSpdVsTeam','chartSpdGrowth','chartSpdPareto']
@@ -1324,8 +1397,12 @@ const GROUP_META = {
   G2: { zh:'二组', en:'Group 2', store:'jxctmm', color:'#3fb950' }
 };
 const GROUP_IDS = ['G1', 'G2'];
+let GROUP_VIEW = 'G1'; // 小组分析当前视图：'G1' | 'G2'（单组独立分析，默认）| 'cmp'（对比，已弱化为次要）
+const GRP_CMP_CHARTS = ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'];
+const GRP_SOLO_CHARTS = ['chartGSoloTrend','chartGSoloCum','chartGSoloQtr','chartGSoloAov','chartGSoloCust','chartGSoloChannel','chartGSoloNew','chartGSoloDow','chartGSoloCn','chartGSoloDeal','chartGSoloMembers'];
 function spGroup(real) { return SP_GROUPS[String(real ?? '').trim()] || null; }
 function groupLabel(gid) { const m = GROUP_META[gid]; return (m ? (LANG === 'zh' ? m.zh : m.en) : '') || gid; }
+function setGroupView(v) { GROUP_VIEW = v; renderGroups(); }
 // 管理员秘钥：同一把钥匙既用于「显示真实姓名」，也用于「新增/编辑/删除」写操作。
 // 客户端只存 SHA-256 摘要做显隐校验（明文不落代码，仅告知管理员）；写操作由后端用
 // 同一明文校验 —— Cloudflare 环境变量 SALES_ADMIN_TOKEN 必须设为同一个明文值。
@@ -3777,6 +3854,170 @@ function animateCount(el, to, fmtFn, dur = 750) {
   requestAnimationFrame(tick);
 }
 
+// 切换器（一组 / 二组 / 对比）的高亮、配色与本地化标签
+function renderGrpSwitch() {
+  const zh = LANG === 'zh';
+  document.querySelectorAll('#grpSwitch button').forEach(btn => {
+    const gv = btn.getAttribute('data-gv');
+    btn.classList.toggle('active', gv === GROUP_VIEW);
+    const lbl = btn.querySelector('.grp-switch-l');
+    const dot = btn.querySelector('.grp-switch-dot');
+    if (gv === 'cmp') { if (lbl) lbl.textContent = zh ? '对比' : 'Compare'; }
+    else { if (lbl) lbl.textContent = groupLabel(gv); const c = GROUP_META[gv].color; if (dot) dot.style.setProperty('--sc', c); btn.style.setProperty('--sc', c); }
+  });
+}
+
+// ── 单组独立分析（一个小组的完整画像，按小组签名色渲染）────────────────────────
+function renderGroupSolo(gid, d, s, totalUsd, monthsAll, zh) {
+  const m = GROUP_META[gid], pc = m.color, name = groupLabel(gid);
+  document.getElementById('gSoloHero').style.setProperty('--pc', pc);
+  document.getElementById('gSoloName').textContent = name;
+  document.getElementById('gSoloAvatar').textContent = (name || '·').slice(0, 1);
+
+  // 空态：当前筛选下该小组无数据
+  if (s.orders === 0) {
+    document.getElementById('gSoloMeta').textContent = zh ? '当前筛选条件下该小组暂无数据' : 'No data for this group under the current filters';
+    document.getElementById('gSoloChips').innerHTML = '';
+    document.getElementById('gSoloStats').innerHTML = '';
+    document.getElementById('gSoloKpi').innerHTML = `<div class="kpi" style="grid-column:1/-1"><div class="kpi-label">${escHtml(zh ? '提示' : 'Note')}</div><div class="kpi-val" style="font-size:15px;color:var(--muted)">${escHtml(zh ? '请调整或重置筛选条件后查看' : 'Adjust or reset the filters to view')}</div></div>`;
+    document.getElementById('gSoloInsights').innerHTML = '';
+    document.getElementById('gSoloLeader').innerHTML = '';
+    document.getElementById('gSoloOrders').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
+    GRP_SOLO_CHARTS.forEach(dc);
+    return;
+  }
+
+  const rows = F.filter(r => spGroup(r.salesperson) === gid);
+  const memEntries = Object.entries(d.members).map(([n, mm]) => ({ n, ...mm })).sort((a, b) => b.usd - a.usd);
+  const monthsArr = Object.keys(d.mUsd).sort();
+  const span = monthsArr.length ? `${monthLabel(monthsArr[0])} – ${monthLabel(monthsArr[monthsArr.length - 1])}` : '—';
+  const share = totalUsd > 0 ? s.usd / totalUsd * 100 : 0;
+
+  // header meta + chips
+  document.getElementById('gSoloMeta').textContent = zh ? `门店 ${m.store} · ${s.members} 名成员 · ${span}` : `Store ${m.store} · ${s.members} members · ${span}`;
+  const chips = [
+    { cls:'accent', txt: (zh ? '门店 ' : 'Store ') + m.store },
+    { cls:'', txt: `${s.members} ${zh ? '名成员' : 'members'}` },
+    { cls:'', txt: `${zh ? '营收占比' : 'Share'} ${share.toFixed(1)}%` },
+    { cls:'', txt: span }
+  ];
+  document.getElementById('gSoloChips').innerHTML = chips.map(c => `<span class="spd-chip ${c.cls}">${escHtml(c.txt)}</span>`).join('');
+
+  // hero stats（数字滚动）
+  const hstats = [
+    { l: zh ? '美元营收' : 'USD Revenue', n: s.usd, f: v => '$' + fmt(Math.round(v)) },
+    { l: zh ? '订单数' : 'Orders', n: s.orders, f: v => fmt(Math.round(v)) },
+    { l: zh ? '客单价' : 'Avg USD', n: s.aov, f: v => '$' + fmt(Math.round(v)) }
+  ];
+  const hsEl = document.getElementById('gSoloStats');
+  hsEl.innerHTML = hstats.map((h, i) => `<div class="spd-hstat" style="animation-delay:${(0.1 + i * 0.08).toFixed(2)}s"><div class="spd-hstat-v">${escHtml(h.f(h.n))}</div><div class="spd-hstat-l">${escHtml(h.l)}</div></div>`).join('');
+  hsEl.querySelectorAll('.spd-hstat-v').forEach((el, i) => animateCount(el, hstats[i].n, hstats[i].f));
+
+  // KPI（数字滚动）
+  const kpis = [
+    { lab: zh ? '美元营收' : 'USD Revenue', ca:'var(--accent)', n: s.usd, f: v => '$' + fmt(Math.round(v)) },
+    { lab: zh ? '人民币营收' : 'RMB Revenue', ca:'var(--g4)', n: s.rmb, f: v => '¥' + fmt(Math.round(v)) },
+    { lab: zh ? '订单数' : 'Orders', ca:'var(--g2)', n: s.orders, f: v => fmt(Math.round(v)) },
+    { lab: zh ? '新客占比' : 'New Customer %', ca:'var(--g5)', n: s.newPct, f: v => Math.round(v) + '%' },
+    { lab: zh ? '覆盖国家' : 'Countries', ca:'var(--g3)', n: s.countries, f: v => fmt(Math.round(v)) },
+    { lab: zh ? '客单价（美元）' : 'Avg USD Order', ca:'#e3b341', n: s.aov, f: v => '$' + fmt(Math.round(v)) },
+    { lab: zh ? '成员数' : 'Members', ca:'#79c0ff', n: s.members, f: v => fmt(Math.round(v)) },
+    { lab: zh ? '营收占比' : 'Group Share', ca:'#56d364', n: share, f: v => v.toFixed(1) + '%' }
+  ];
+  const kg = document.getElementById('gSoloKpi');
+  kg.innerHTML = kpis.map(k => `<div class="kpi" style="--ca:${k.ca}"><div class="kpi-label">${escHtml(k.lab)}</div><div class="kpi-val">${escHtml(k.f(k.n))}</div></div>`).join('');
+  kg.querySelectorAll('.kpi-val').forEach((el, i) => animateCount(el, kpis[i].n, kpis[i].f));
+
+  // Highlights
+  const dayNames = zh ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const cnSorted = Object.entries(d.cnUsd).sort((a, b) => b[1] - a[1]);
+  const bestMonth = Object.entries(d.mUsd).sort((a, b) => b[1] - a[1])[0];
+  let busiestDow = -1, busiestCnt = -1; d.dow.forEach((c, i) => { if (c > busiestCnt) { busiestCnt = c; busiestDow = i; } });
+  const onlinePct = s.orders ? d.online / s.orders * 100 : 0;
+  const seq = monthsArr.map(mm => d.mUsd[mm] || 0);
+  const win = Math.max(1, Math.min(3, Math.floor(seq.length / 2)));
+  const recent = seq.slice(-win).reduce((a, b) => a + b, 0), prior = seq.slice(-2 * win, -win).reduce((a, b) => a + b, 0);
+  const moPct = prior > 0 ? (recent - prior) / prior * 100 : null;
+  const cards = [];
+  cards.push({ ic:'💰', color: pc, title: zh ? '团队营收' : 'Total Revenue', metric: `$${fmt(s.usd)}`, desc: `${s.orders} ${zh ? '单' : 'orders'} · ${share.toFixed(1)}%` });
+  if (bestMonth) cards.push({ ic:'🏆', color:'var(--g5)', title: zh ? '最佳月份' : 'Best Month', metric: monthLabel(bestMonth[0]), desc: `$${fmt(Math.round(bestMonth[1]))}` });
+  cards.push({ ic: moPct == null ? '➖' : (moPct >= 0 ? '📈' : '📉'), color: moPct == null ? 'var(--muted)' : (moPct >= 0 ? 'var(--g2)' : 'var(--g3)'), title: zh ? '近期势头' : 'Momentum', metric: moPct == null ? '—' : `${moPct >= 0 ? '+' : ''}${moPct.toFixed(1)}%`, desc: zh ? `近 ${win} 月 vs 前 ${win} 月` : `Last ${win} vs prior ${win} mo` });
+  if (cnSorted.length) cards.push({ ic:'🌍', color:'var(--g4)', title: zh ? '主战场' : 'Top Market', metric: cnSorted[0][0], desc: `$${fmt(Math.round(cnSorted[0][1]))} · ${(s.usd > 0 ? cnSorted[0][1] / s.usd * 100 : 0).toFixed(0)}%` });
+  if (memEntries.length) cards.push({ ic:'⭐', color:'#bc8cff', title: zh ? '核心成员' : 'Top Member', metric: spName(memEntries[0].n), desc: `$${fmt(memEntries[0].usd)}` });
+  cards.push({ ic:'🔁', color:'#56d364', title: zh ? '新客获取' : 'New Acquisition', metric: `${Math.round(s.newPct)}%`, desc: `${d.newC} ${zh ? '新' : 'new'} · ${d.ret} ${zh ? '老' : 'ret'}` });
+  cards.push({ ic:'🛒', color:'#3fb950', title: zh ? '线上占比' : 'Online Share', metric: `${Math.round(onlinePct)}%`, desc: `${d.online} ${zh ? '线上' : 'online'} · ${d.offline} ${zh ? '线下' : 'offline'}` });
+  if (busiestCnt > 0) cards.push({ ic:'📅', color:'#79c0ff', title: zh ? '最活跃' : 'Busiest Day', metric: dayNames[busiestDow], desc: `${busiestCnt} ${zh ? '单' : 'orders'}` });
+  document.getElementById('gSoloInsights').innerHTML = cards.map((c, i) => `<div class="insight" style="--ic:${c.color};animation-delay:${(0.04 * i + 0.04).toFixed(2)}s"><div class="insight-ic">${c.ic}</div><div class="insight-body"><div class="insight-title">${escHtml(c.title)}</div><div class="insight-metric" title="${escHtml(c.metric)}">${escHtml(c.metric)}</div><div class="insight-desc">${escHtml(c.desc)}</div></div></div>`).join('');
+
+  // 月度营收 + 订单（双轴）
+  dc('chartGSoloTrend');
+  CI.chartGSoloTrend = new Chart(document.getElementById('chartGSoloTrend'), {
+    data: { labels: monthsAll.map(monthLabel), datasets: [
+      { type:'line', label: zh ? '美元营收' : 'USD', data: monthsAll.map(mm => d.mUsd[mm] || 0), borderColor: pc, backgroundColor: areaGradient(pc), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, yAxisID: 'y', datalabels: { display: false } },
+      { type:'bar', label: zh ? '订单数' : 'Orders', data: monthsAll.map(mm => d.mOrd[mm] || 0), backgroundColor:'rgba(139,148,158,0.30)', borderColor:'#8b949e', borderWidth: 1, borderRadius: 3, yAxisID: 'y1', datalabels: { display: false } }
+    ] },
+    options: spdTrendOpts()
+  });
+
+  // 累计营收
+  let run = 0; const cum = monthsAll.map(mm => (run += (d.mUsd[mm] || 0)));
+  dc('chartGSoloCum');
+  CI.chartGSoloCum = new Chart(document.getElementById('chartGSoloCum'), { type:'line', data:{ labels: monthsAll.map(monthLabel), datasets:[{ label: zh ? '累计美元' : 'Cumulative USD', data: cum, borderColor: pc, backgroundColor: areaGradient(pc), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, datalabels:{ display:false } }] }, options: darkOpts({ yPfx:'$' }) });
+
+  // 季度营收
+  const qL = Object.keys(d.qUsd).sort();
+  dc('chartGSoloQtr');
+  CI.chartGSoloQtr = new Chart(document.getElementById('chartGSoloQtr'), { type:'bar', data:{ labels: qL, datasets:[{ label: zh ? '美元营收' : 'USD', data: qL.map(q => d.qUsd[q]), backgroundColor: pc, borderRadius: 4, datalabels:{ display:false } }] }, options: darkOpts({ yPfx:'$' }) });
+
+  // 客单价趋势
+  dc('chartGSoloAov');
+  CI.chartGSoloAov = new Chart(document.getElementById('chartGSoloAov'), { type:'line', data:{ labels: monthsAll.map(monthLabel), datasets:[{ label: zh ? '客单价' : 'AOV', data: monthsAll.map(mm => d.mAovCnt[mm] ? d.mAovSum[mm] / d.mAovCnt[mm] : null), borderColor:'#e3b341', backgroundColor: areaGradient('#e3b341'), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, spanGaps: true, datalabels:{ display:false } }] }, options: darkOpts({ yPfx:'$', spanGaps:true }) });
+
+  // 客户结构（环形）
+  dc('chartGSoloCust');
+  CI.chartGSoloCust = new Chart(document.getElementById('chartGSoloCust'), { type:'doughnut', data:{ labels:[t('newCustomer'), t('returning')], datasets:[{ data:[d.newC, d.ret], backgroundColor:['#58a6ff','#d2a8ff'], borderWidth: 0, datalabels:{ color:'#fff', font:{ weight:'bold', size:11 } } }] }, options: donutOpts() });
+
+  // 渠道结构（环形）
+  dc('chartGSoloChannel');
+  CI.chartGSoloChannel = new Chart(document.getElementById('chartGSoloChannel'), { type:'doughnut', data:{ labels:[t('online'), t('offline')], datasets:[{ data:[d.online, d.offline], backgroundColor:['#3fb950','#ffa657'], borderWidth: 0, datalabels:{ color:'#fff', font:{ weight:'bold', size:11 } } }] }, options: donutOpts() });
+
+  // 新客占比趋势
+  dc('chartGSoloNew');
+  CI.chartGSoloNew = new Chart(document.getElementById('chartGSoloNew'), { type:'line', data:{ labels: monthsAll.map(monthLabel), datasets:[{ label: zh ? '新客占比' : 'New %', data: monthsAll.map(mm => { const o = d.mOrd[mm] || 0; return o ? Math.round((d.mNew[mm] || 0) / o * 100) : null; }), borderColor: pc, backgroundColor:'transparent', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, spanGaps: true, datalabels:{ display:false } }] }, options: darkOpts({ spanGaps:true }) });
+
+  // 按星期活跃度
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
+  dc('chartGSoloDow');
+  CI.chartGSoloDow = new Chart(document.getElementById('chartGSoloDow'), { type:'bar', data:{ labels: dowOrder.map(i => dayNames[i]), datasets:[{ label: zh ? '订单数' : 'Orders', data: dowOrder.map(i => d.dow[i]), backgroundColor: pc, borderRadius: 4, datalabels:{ display:true, anchor:'end', align:'top', color: tc('--chart-text'), font:{ size:11 }, formatter: v => v || '' } }] }, options: darkOpts({}) });
+
+  // 主要市场（横向条）
+  const cn = Object.entries(d.cnUsd).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  dc('chartGSoloCn');
+  CI.chartGSoloCn = new Chart(document.getElementById('chartGSoloCn'), { type:'bar', data:{ labels: cn.map(e => e[0]), datasets:[{ label: zh ? '美元营收' : 'USD', data: cn.map(e => e[1]), backgroundColor: C.slice(0, cn.length), borderRadius: 4, datalabels:{ display:false } }] }, options: darkOpts({ yPfx:'$', indexAxis:'y' }) });
+
+  // 订单金额分布
+  const dealLabels = ['<$1K', '$1–5K', '$5–10K', '$10–50K', '≥$50K'];
+  dc('chartGSoloDeal');
+  CI.chartGSoloDeal = new Chart(document.getElementById('chartGSoloDeal'), { type:'bar', data:{ labels: dealLabels, datasets:[{ label: zh ? '订单数' : 'Orders', data: d.deal, backgroundColor:['#79c0ff','#58a6ff','#3fb950','#e3b341','#f78166'], borderRadius: 4, datalabels:{ display:true, anchor:'end', align:'top', color: tc('--chart-text'), font:{ size:11 }, formatter: v => v || '' } }] }, options: darkOpts({}) });
+
+  // 成员贡献（横向条，点击进入画像）
+  const memOpts = darkOpts({ yPfx:'$', indexAxis:'y' });
+  memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memEntries[els[0].index]; if (e && !spDeparted(e.n)) showSpDetail(e.n); } };
+  dc('chartGSoloMembers');
+  CI.chartGSoloMembers = new Chart(document.getElementById('chartGSoloMembers'), { type:'bar', data:{ labels: memEntries.map(e => spName(e.n)), datasets:[{ label: zh ? '美元营收' : 'USD', data: memEntries.map(e => e.usd), backgroundColor: pc, borderRadius: 4, datalabels:{ display:false } }] }, options: memOpts });
+
+  // 成员排行榜（组内）
+  const lbCols = zh ? ['#', '成员', '美元营收', '订单', '客单价', '组内占比'] : ['#', 'Member', 'USD', 'Orders', 'Avg USD', 'Share'];
+  const lbBody = memEntries.map((e, i) => { const aov = e.posCnt ? e.posSum / e.posCnt : 0, sh = s.usd > 0 ? e.usd / s.usd * 100 : 0; return `<tr><td>${i + 1}</td><td>${spHtml(e.n)}</td><td>$${fmt(e.usd)}</td><td>${fmt(e.orders)}</td><td>$${fmt(aov)}</td><td>${sh.toFixed(1)}%</td></tr>`; }).join('');
+  document.getElementById('gSoloLeader').innerHTML = `<thead><tr>${lbCols.map(c => `<th>${escHtml(c)}</th>`).join('')}</tr></thead><tbody>${lbBody}</tbody>`;
+
+  // 高额订单（组内）
+  const oCols = zh ? ['#', '日期', '国家', '美元', '业务员', '渠道'] : ['#', 'Date', 'Country', 'USD', 'Salesperson', 'Channel'];
+  const top = rows.filter(r => r.usd > 0).sort((a, b) => b.usd - a.usd).slice(0, 10);
+  const oBody = top.map((r, i) => `<tr><td style="color:var(--muted)">${i + 1}</td><td style="color:var(--muted)">${escHtml(r.date)}</td><td>${escHtml(r.country || '—')}</td><td style="color:var(--accent);font-weight:700">$${fmt(r.usd, 2)}</td><td>${spHtml(r.salesperson)}</td><td><span class="badge ${r.channel && r.channel.includes('线上') ? 'b-on' : 'b-off'}">${r.channel && r.channel.includes('线上') ? t('badgeOnline') : t('badgeOffline')}</span></td></tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
+  document.getElementById('gSoloOrders').innerHTML = `<thead><tr>${oCols.map(c => `<th>${escHtml(c)}</th>`).join('')}</tr></thead><tbody>${oBody}</tbody>`;
+}
+
 // ── Group Analysis（小组分析：一组 vs 二组，在当前筛选集 F 上按小组聚合）─────────
 function renderGroups() {
   const zh = LANG === 'zh';
@@ -3786,7 +4027,7 @@ function renderGroups() {
 
   // 每组聚合
   const init = () => ({ usd:0, rmb:0, orders:0, newC:0, ret:0, online:0, offline:0, posSum:0, posCnt:0,
-    countries:new Set(), members:{}, mUsd:{}, mOrd:{}, cnUsd:{}, mNew:{}, mAovSum:{}, mAovCnt:{}, qUsd:{}, deal:[0,0,0,0,0] });
+    countries:new Set(), members:{}, mUsd:{}, mOrd:{}, cnUsd:{}, mNew:{}, mAovSum:{}, mAovCnt:{}, qUsd:{}, deal:[0,0,0,0,0], dow:[0,0,0,0,0,0,0] });
   const G = { G1: init(), G2: init() };
   F.forEach(r => {
     const gid = spGroup(r.salesperson); if (!gid) return;
@@ -3809,6 +4050,7 @@ function renderGroups() {
       const mp = r.month.split('-'); const q = Math.ceil((+mp[1]) / 3); const qk = `${mp[0]} Q${q}`;
       d.qUsd[qk] = (d.qUsd[qk] || 0) + r.usd;
     }
+    if (r.date) { const p = String(r.date).split('-'); if (p.length === 3) { const wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay(); if (!isNaN(wd)) d.dow[wd]++; } }
   });
   const stat = gid => { const d = G[gid]; return {
     gid, usd:d.usd, rmb:d.rmb, orders:d.orders,
@@ -3818,6 +4060,18 @@ function renderGroups() {
     newC: d.newC, ret: d.ret, online: d.online, offline: d.offline }; };
   const S = { G1: stat('G1'), G2: stat('G2') };
   const totalUsd = S.G1.usd + S.G2.usd;
+
+  // ── 视图分发：单组独立分析（默认，主视图）/ 对比（次要视图）──
+  renderGrpSwitch();
+  const soloMode = GROUP_VIEW !== 'cmp';
+  document.getElementById('grpSolo').style.display = soloMode ? '' : 'none';
+  document.getElementById('grpCompare').style.display = soloMode ? 'none' : '';
+  if (soloMode) {
+    GRP_CMP_CHARTS.forEach(dc);
+    renderGroupSolo(GROUP_VIEW, G[GROUP_VIEW], S[GROUP_VIEW], totalUsd, monthsAll, zh);
+    return;
+  }
+  GRP_SOLO_CHARTS.forEach(dc);
 
   // 空态：当前筛选下无任一小组成员数据
   if (S.G1.orders + S.G2.orders === 0) {
@@ -4757,6 +5011,7 @@ const T = {
     grpDealTitle: 'Order Size Distribution', grpDealSub: 'Deals by USD value bucket per group',
     grpWinsTitle: 'Monthly Wins', grpWinsSub: 'Months each group led on USD',
     grpLeaderTitle: 'Member Leaderboard',
+    grpSoloHi: 'Highlights',
     adminRevealPrompt: 'Enter the admin key to reveal real names:',
     adminRevealWrong: 'Incorrect key.',
     adminOffLabel: '🔒 Real Names', adminOnLabel: '🔓 Real Names ✓',
@@ -4906,6 +5161,7 @@ const T = {
     grpDealTitle: '订单金额分布', grpDealSub: '各小组按金额区间订单数',
     grpWinsTitle: '月度胜场', grpWinsSub: '各小组月度美元领先次数',
     grpLeaderTitle: '成员排行榜',
+    grpSoloHi: '小组亮点',
     adminRevealPrompt: '请输入管理员秘钥以显示真实姓名：',
     adminRevealWrong: '秘钥错误。',
     adminOffLabel: '🔒 真实姓名', adminOnLabel: '🔓 真实姓名 ✓',
