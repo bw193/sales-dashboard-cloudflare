@@ -189,10 +189,27 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 .sp-link:hover{color:var(--accent)}
 .sp-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 /* salesperson profile (drill-down) page */
-.sp-profile-hd{display:flex;align-items:center;gap:14px;margin:4px 0 22px;flex-wrap:wrap}
-.sp-avatar{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--g4));flex-shrink:0;box-shadow:var(--shadow-sm)}
-.sp-profile-name{font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.15}
-.sp-profile-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.spd-hero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin:4px 0 22px;box-shadow:var(--shadow-sm);
+  animation:grpPanelIn .55s var(--ease-spring) both}
+.spd-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 120% at 0% 0%,color-mix(in srgb,var(--pc,var(--accent)) 18%,transparent),transparent 55%);pointer-events:none}
+.spd-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--pc,var(--accent)),transparent);background-size:200% 100%;animation:grpAccent 3.6s linear infinite}
+.spd-hero>*{position:relative;min-width:0}
+.spd-hero-main{display:flex;align-items:center;gap:16px;min-width:0}
+.sp-avatar{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex-shrink:0;position:relative;
+  background:linear-gradient(140deg,var(--pc,var(--accent)),color-mix(in srgb,var(--pc,var(--accent)) 55%,#000));box-shadow:0 8px 20px color-mix(in srgb,var(--pc,var(--accent)) 40%,transparent)}
+.sp-avatar::after{content:'';position:absolute;inset:-5px;border-radius:20px;border:2px solid color-mix(in srgb,var(--pc,var(--accent)) 55%,transparent);opacity:0;animation:grpRing 2.8s var(--ease-out-cubic) infinite}
+.sp-profile-name{font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.12;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sp-profile-meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+.spd-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.spd-chip{font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:7px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.spd-chip.accent{color:var(--pc,var(--accent));background:color-mix(in srgb,var(--pc,var(--accent)) 14%,transparent)}
+.spd-hero-stats{display:flex;gap:10px;flex-wrap:wrap}
+.spd-hstat{min-width:104px;background:var(--surface2);border-radius:12px;padding:11px 15px;border:1px solid transparent;transition:border-color .2s ease,transform .25s var(--ease-spring);animation:grpKpiIn .5s var(--ease-spring) both}
+.spd-hstat:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--pc,var(--accent)) 35%,transparent)}
+.spd-hstat-v{font-size:21px;font-weight:800;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;line-height:1;color:var(--pc,var(--accent))}
+.spd-hstat-l{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:5px}
+@media(max-width:680px){.spd-hero{flex-direction:column;align-items:flex-start}.spd-hero-stats{width:100%}}
 .sp-badge-active{display:inline-block;font-size:10.5px;font-weight:600;color:var(--g2);background:rgba(34,197,94,.13);padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
 .btn-back{cursor:pointer;margin-bottom:6px}
 /* ── Group Analysis — head-to-head "versus" treatment ───────────────────────── */
@@ -1055,12 +1072,16 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 <!-- ══════════ PAGE: SALESPERSON PROFILE (drill-down, not in nav) ══════════ -->
 <div class="page" id="page-spdetail">
   <button class="btn btn-back" onclick="backFromSpDetail()" data-t="spBackBtn">← Back</button>
-  <div class="sp-profile-hd">
-    <div class="sp-avatar" id="spdAvatar">·</div>
-    <div>
-      <div class="sp-profile-name"><span id="spdName">—</span><span class="sp-badge-active" data-t="spActiveBadge">Active</span></div>
-      <div class="sp-profile-meta" id="spdMeta"></div>
+  <div class="spd-hero" id="spdHero">
+    <div class="spd-hero-main">
+      <div class="sp-avatar" id="spdAvatar">·</div>
+      <div class="spd-hero-id">
+        <div class="sp-profile-name"><span id="spdName">—</span><span class="sp-badge-active" data-t="spActiveBadge">Active</span></div>
+        <div class="sp-profile-meta" id="spdMeta"></div>
+        <div class="spd-chips" id="spdChips"></div>
+      </div>
     </div>
+    <div class="spd-hero-stats" id="spdHeroStats"></div>
   </div>
 
   <div class="sec" data-t="spdKpiSec">Performance Summary</div>
@@ -1077,6 +1098,17 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
     <div class="card">
       <div class="card-hd"><div><div class="card-title" data-t="spdCumTitle">Cumulative Revenue</div><div class="card-sub" data-t="spdCumSub">Running USD total over time</div></div></div>
       <div class="cw" style="height:260px"><canvas id="chartSpdCumulative"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdQtrTitle">Quarterly Revenue</div><div class="card-sub" data-t="spdQtrSub">USD revenue by quarter</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdQtr"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdVsTeamTitle">You vs Team Average</div><div class="card-sub" data-t="spdVsTeamSub">Monthly USD: this salesperson vs team mean</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdVsTeam"></canvas></div>
     </div>
   </div>
 
@@ -1099,6 +1131,17 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
     <div class="card">
       <div class="card-hd"><div><div class="card-title" data-t="spdAovTitle">Avg Order Value Trend</div><div class="card-sub" data-t="spdAovSub">USD per order over time</div></div></div>
       <div class="cw" style="height:240px"><canvas id="chartSpdAov"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdGrowthTitle">Month-over-Month Growth</div><div class="card-sub" data-t="spdGrowthSub">USD revenue % change vs prior month</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdGrowth"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title" data-t="spdParetoTitle">Revenue Concentration</div><div class="card-sub" data-t="spdParetoSub">Cumulative USD share across ranked orders</div></div></div>
+      <div class="cw" style="height:240px"><canvas id="chartSpdPareto"></canvas></div>
     </div>
   </div>
 
@@ -1227,7 +1270,7 @@ const PAGE_CHARTS = Object.freeze({
   'page-groups': ['chartGrpTrend','chartGrpCumulative','chartGrpShare','chartGrpRadar','chartGrpMembers','chartGrpOrders','chartGrpCust','chartGrpChannel','chartGrpCnG1','chartGrpCnG2','chartGrpQtr','chartGrpNewTrend','chartGrpAovTrend','chartGrpDeal','chartGrpWins'],
   'page-market': ['chartCnTop','chartStoreChannel','chartRegionPie','chartCnYoy','chartNewMkt','chartMktConc','chartTopStores'],
   'page-orders': [],
-  'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow']
+  'page-spdetail': ['chartSpdTrend','chartSpdCountries','chartSpdCust','chartSpdChannel','chartSpdCumulative','chartSpdRadar','chartSpdCustTrend','chartSpdAov','chartSpdDeal','chartSpdStore','chartSpdRank','chartSpdDow','chartSpdQtr','chartSpdVsTeam','chartSpdGrowth','chartSpdPareto']
 });
 let SP_DETAIL = null; // 当前钻取的业务员（真实姓名），null = 不在画像页
 let SP_DETAIL_ORIGIN = null; // 进入画像页前的来源页 {id, tab}，用于「返回」
@@ -4181,10 +4224,14 @@ function renderSpDetail() {
   const rows = F.filter(r => r.salesperson === real);
   const shown = spName(real);
 
-  // header
+  // header（个人签名色：属组 → 小组色，否则按姓名哈希取调色板色）
   document.getElementById('spdName').textContent = shown;
   const av = document.getElementById('spdAvatar');
   av.textContent = (shown || '·').slice(0, 1);
+  const gidp = spGroup(real);
+  let _ph = 0; for (let i = 0; i < real.length; i++) _ph = (_ph * 31 + real.charCodeAt(i)) | 0;
+  const pc = gidp ? GROUP_META[gidp].color : C[Math.abs(_ph) % C.length];
+  document.getElementById('spdHero').style.setProperty('--pc', pc);
   // a11y：给「返回」按钮一个含业务员名的 aria-label，让读屏用户知道当前所在画像
   const _back = document.querySelector('#page-spdetail .btn-back');
   if (_back) _back.setAttribute('aria-label', zh ? `返回，离开 ${shown} 的画像` : `Back, leaving ${shown}'s profile`);
@@ -4194,10 +4241,12 @@ function renderSpDetail() {
   if (!rows.length) {
     document.getElementById('spdMeta').textContent = zh
       ? '当前筛选条件下暂无该业务员的数据' : 'No data for this salesperson under the current filters';
+    document.getElementById('spdChips').innerHTML = '';
+    document.getElementById('spdHeroStats').innerHTML = '';
     document.getElementById('spdKpiGrid').innerHTML =
       `<div class="kpi" style="grid-column:1/-1"><div class="kpi-label">${escHtml(zh ? '提示' : 'Note')}</div>`
       + `<div class="kpi-val" style="font-size:15px;color:var(--muted)">${escHtml(zh ? '请调整或重置筛选条件后查看' : 'Adjust or reset the filters to view')}</div></div>`;
-    ['chartSpdTrend', 'chartSpdCountries', 'chartSpdCust', 'chartSpdChannel', 'chartSpdCumulative', 'chartSpdRadar', 'chartSpdCustTrend', 'chartSpdAov', 'chartSpdDeal', 'chartSpdStore', 'chartSpdRank', 'chartSpdDow'].forEach(dc);
+    ['chartSpdTrend', 'chartSpdCountries', 'chartSpdCust', 'chartSpdChannel', 'chartSpdCumulative', 'chartSpdRadar', 'chartSpdCustTrend', 'chartSpdAov', 'chartSpdDeal', 'chartSpdStore', 'chartSpdRank', 'chartSpdDow', 'chartSpdQtr', 'chartSpdVsTeam', 'chartSpdGrowth', 'chartSpdPareto'].forEach(dc);
     document.getElementById('spdInsights').innerHTML = '';
     document.getElementById('spdOrdersBody').innerHTML =
       `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">${escHtml(zh ? '暂无数据' : 'No data')}</td></tr>`;
@@ -4207,7 +4256,7 @@ function renderSpDetail() {
   // aggregate
   let usd = 0, rmb = 0, newC = 0, ret = 0, online = 0, offline = 0, ordSum = 0, ordCnt = 0;
   const orders = rows.length;
-  const countries = new Set(), months = new Set(), mUsd = {}, mOrd = {}, cnUsd = {};
+  const countries = new Set(), months = new Set(), mUsd = {}, mOrd = {}, cnUsd = {}, qUsd = {};
   const mNew = {}, mRet = {}, mAovSum = {}, mAovCnt = {}; // per-month new/returning & AOV
   const stUsd = {};                                       // 各店铺营收
   const dealBuckets = [0, 0, 0, 0, 0];                    // 订单金额分布：<1K /1–5K /5–10K /10–50K /≥50K
@@ -4225,6 +4274,8 @@ function renderSpDetail() {
       mOrd[r.month] = (mOrd[r.month] || 0) + 1;
       if (isNew) mNew[r.month] = (mNew[r.month] || 0) + 1; else if (r.custType && r.custType.includes('老')) mRet[r.month] = (mRet[r.month] || 0) + 1;
       if (r.usd > 0) { mAovSum[r.month] = (mAovSum[r.month] || 0) + r.usd; mAovCnt[r.month] = (mAovCnt[r.month] || 0) + 1; }
+      const _mp = r.month.split('-'); const _q = Math.ceil((+_mp[1]) / 3); const _qk = `${_mp[0]} Q${_q}`;
+      qUsd[_qk] = (qUsd[_qk] || 0) + r.usd;
     }
     if (r.country && r.usd > 0) cnUsd[r.country] = (cnUsd[r.country] || 0) + r.usd;
     if (r.store && r.usd > 0) stUsd[r.store] = (stUsd[r.store] || 0) + r.usd;
@@ -4253,20 +4304,40 @@ function renderSpDetail() {
     ? `${store ? '门店 ' + store + ' · ' : ''}按美元营收排名 #${rank || '—'} / ${totalSp} · ${span}`
     : `${store ? 'Store ' + store + ' · ' : ''}Rank #${rank || '—'} of ${totalSp} by USD · ${span}`;
 
+  // 头部徽章 + 大数字（数字滚动）
+  const teamTotalUsd = Object.values(spUsd).reduce((a, b) => a + b, 0);
+  const teamSharePct = teamTotalUsd > 0 ? usd / teamTotalUsd * 100 : 0;
+  const chips = [];
+  if (store) chips.push({ cls:'accent', txt: (zh ? '门店 ' : 'Store ') + store });
+  if (gidp) chips.push({ cls:'', txt: groupLabel(gidp) });
+  chips.push({ cls:'', txt: `${zh ? '排名' : 'Rank'} #${rank || '—'} / ${totalSp}` });
+  chips.push({ cls:'', txt: span });
+  document.getElementById('spdChips').innerHTML = chips.map(c => `<span class="spd-chip ${c.cls}">${escHtml(c.txt)}</span>`).join('');
+  const hstats = [
+    { l: zh ? '美元营收' : 'USD Revenue', n: usd, f: v => '$' + fmt(Math.round(v)) },
+    { l: zh ? '订单数' : 'Orders', n: orders, f: v => fmt(Math.round(v)) },
+    { l: zh ? '团队贡献' : 'Team Share', n: teamSharePct, f: v => v.toFixed(1) + '%' }
+  ];
+  const hsEl = document.getElementById('spdHeroStats');
+  hsEl.innerHTML = hstats.map((h, i) => `<div class="spd-hstat" style="animation-delay:${(0.1 + i * 0.08).toFixed(2)}s"><div class="spd-hstat-v">${escHtml(h.f(h.n))}</div><div class="spd-hstat-l">${escHtml(h.l)}</div></div>`).join('');
+  hsEl.querySelectorAll('.spd-hstat-v').forEach((el, i) => animateCount(el, hstats[i].n, hstats[i].f));
+
   // KPI cards
   const kpis = [
-    { lab: zh ? '美元营收' : 'USD Revenue', val: `$${fmt(usd)}`, ca: 'var(--accent)' },
-    { lab: zh ? '人民币营收' : 'RMB Revenue', val: `¥${fmt(rmb)}`, ca: 'var(--g4)' },
-    { lab: zh ? '订单数' : 'Orders', val: fmt(orders), ca: 'var(--g2)' },
-    { lab: zh ? '新客占比' : 'New Customer %', val: `${newPct}%`, ca: 'var(--g5)' },
-    { lab: zh ? '覆盖国家' : 'Countries', val: fmt(countries.size), ca: 'var(--g3)' },
-    { lab: zh ? '客单价（美元）' : 'Avg USD Order', val: `$${fmt(avg)}`, ca: '#e3b341' },
+    { lab: zh ? '美元营收' : 'USD Revenue', val: `$${fmt(usd)}`, ca: 'var(--accent)', n: usd, f: v => '$' + fmt(Math.round(v)) },
+    { lab: zh ? '人民币营收' : 'RMB Revenue', val: `¥${fmt(rmb)}`, ca: 'var(--g4)', n: rmb, f: v => '¥' + fmt(Math.round(v)) },
+    { lab: zh ? '订单数' : 'Orders', val: fmt(orders), ca: 'var(--g2)', n: orders, f: v => fmt(Math.round(v)) },
+    { lab: zh ? '新客占比' : 'New Customer %', val: `${newPct}%`, ca: 'var(--g5)', n: newPct, f: v => Math.round(v) + '%' },
+    { lab: zh ? '覆盖国家' : 'Countries', val: fmt(countries.size), ca: 'var(--g3)', n: countries.size, f: v => fmt(Math.round(v)) },
+    { lab: zh ? '客单价（美元）' : 'Avg USD Order', val: `$${fmt(avg)}`, ca: '#e3b341', n: avg, f: v => '$' + fmt(Math.round(v)) },
     { lab: zh ? '所属门店' : 'Store', val: store || '—', ca: '#79c0ff' },
     { lab: zh ? '综合排名' : 'Overall Rank', val: rank ? `#${rank}` : '—', ca: '#56d364' }
   ];
-  document.getElementById('spdKpiGrid').innerHTML = kpis.map(k =>
+  const kg = document.getElementById('spdKpiGrid');
+  kg.innerHTML = kpis.map(k =>
     `<div class="kpi" style="--ca:${k.ca}"><div class="kpi-label">${escHtml(k.lab)}</div><div class="kpi-val">${escHtml(String(k.val))}</div></div>`
   ).join('');
+  kg.querySelectorAll('.kpi-val').forEach((el, i) => { if (kpis[i] && kpis[i].n != null) animateCount(el, kpis[i].n, kpis[i].f); });
 
   // monthly revenue + orders (dual axis)
   const monthsAll = allMonths();
@@ -4475,6 +4546,64 @@ function renderSpDetail() {
     options: darkOpts({})
   });
 
+  // ── Quarterly revenue（季度营收）──
+  const qLabels = Object.keys(qUsd).sort();
+  dc('chartSpdQtr');
+  CI.chartSpdQtr = new Chart(document.getElementById('chartSpdQtr'), {
+    type: 'bar',
+    data: { labels: qLabels, datasets: [{ label: zh ? '美元营收' : 'USD', data: qLabels.map(q => qUsd[q]), backgroundColor: pc, borderRadius: 4, datalabels: { display: false } }] },
+    options: darkOpts({ yPfx: '$' })
+  });
+
+  // ── You vs Team average（个人 vs 团队月度均值）──
+  const teamMo = {};
+  F.forEach(r => { if (!r.month || !r.salesperson) return; const o = teamMo[r.month] = teamMo[r.month] || { usd: 0, sps: new Set() }; o.usd += r.usd; o.sps.add(r.salesperson); });
+  const teamAvgMo = mm => { const o = teamMo[mm]; return o && o.sps.size ? o.usd / o.sps.size : 0; };
+  dc('chartSpdVsTeam');
+  CI.chartSpdVsTeam = new Chart(document.getElementById('chartSpdVsTeam'), {
+    type: 'line',
+    data: { labels: monthsAll.map(monthLabel), datasets: [
+      { label: shown, data: monthsAll.map(mm => mUsd[mm] || 0), borderColor: pc, backgroundColor: areaGradient(pc, 0.16), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.4, datalabels: { display: false } },
+      { label: zh ? '团队平均' : 'Team Avg', data: monthsAll.map(teamAvgMo), borderColor: '#8b949e', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.4, datalabels: { display: false } }
+    ] },
+    options: darkOpts({ yPfx: '$' })
+  });
+
+  // ── Month-over-month growth（环比增长率；绿涨红跌）──
+  const growthVals = monthsAll.map((mm, i) => { if (i === 0) return null; const prev = mUsd[monthsAll[i - 1]] || 0, cur = mUsd[mm] || 0; return prev > 0 ? (cur - prev) / prev * 100 : null; });
+  dc('chartSpdGrowth');
+  CI.chartSpdGrowth = new Chart(document.getElementById('chartSpdGrowth'), {
+    type: 'bar',
+    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '环比' : 'MoM %', data: growthVals, backgroundColor: growthVals.map(v => v == null ? '#8b949e' : v >= 0 ? 'rgba(63,185,80,0.75)' : 'rgba(248,81,73,0.75)'), borderRadius: 3, datalabels: { display: false } }] },
+    options: darkOpts({})
+  });
+
+  // ── Revenue concentration（订单营收集中度 / 帕累托累计%）──
+  const ordSorted = rows.filter(r => r.usd > 0).sort((a, b) => b.usd - a.usd);
+  const totPos = ordSorted.reduce((a, r) => a + r.usd, 0) || 1;
+  let cumP = 0; const paretoVals = ordSorted.map(r => { cumP += r.usd; return Math.round(cumP / totPos * 100); });
+  const paretoLabels = ordSorted.map((r, i) => `#${i + 1}`);
+  const pkTxt = tc('--chart-text'), pkGrid = tc('--chart-grid');
+  dc('chartSpdPareto');
+  CI.chartSpdPareto = new Chart(document.getElementById('chartSpdPareto'), {
+    type: 'line',
+    data: { labels: paretoLabels, datasets: [{ label: zh ? '累计营收%' : 'Cumulative %', data: paretoVals, borderColor: pc, backgroundColor: areaGradient(pc, 0.14), fill: true, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4, tension: 0.25, datalabels: { display: false } }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: entranceAnim('line'), transitions: CHART_TRANSITIONS, devicePixelRatio: CHART_DPR,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: tc('--chart-tooltip-bg'), borderColor: tc('--chart-tooltip-border'), borderWidth: 1, titleColor: tc('--chart-tooltip-title'), bodyColor: tc('--chart-tooltip-body'), callbacks: { label: ctx => ` ${zh ? '前' : 'Top'} ${ctx.dataIndex + 1} ${zh ? '单累计' : 'orders'}: ${ctx.parsed.y}%` } },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: { grid: { color: pkGrid }, ticks: { color: pkTxt, font: { size: 10 }, maxTicksLimit: 12 } },
+        y: { min: 0, max: 100, grid: { color: pkGrid }, ticks: { color: pkTxt, font: { size: 11 }, callback: v => v + '%' } }
+      }
+    }
+  });
+
   // top orders table
   const top = rows.filter(r => r.usd > 0).sort((a, b) => b.usd - a.usd).slice(0, 10);
   document.getElementById('spdOrdersBody').innerHTML = top.map((r, i) => `<tr>
@@ -4605,6 +4734,10 @@ const T = {
     spdStoreTitle: 'Revenue by Store', spdStoreSub: 'USD revenue per store',
     spdRankTitle: 'Monthly Rank Trend', spdRankSub: 'Team rank by USD per month (1 = best)',
     spdDowTitle: 'Activity by Weekday', spdDowSub: 'Orders by day of week',
+    spdQtrTitle: 'Quarterly Revenue', spdQtrSub: 'USD revenue by quarter',
+    spdVsTeamTitle: 'You vs Team Average', spdVsTeamSub: 'Monthly USD: this salesperson vs team mean',
+    spdGrowthTitle: 'Month-over-Month Growth', spdGrowthSub: 'USD revenue % change vs prior month',
+    spdParetoTitle: 'Revenue Concentration', spdParetoSub: 'Cumulative USD share across ranked orders',
     grpKpiSec: 'Group Comparison', grpHighlightsSec: 'Highlights',
     grpTrendTitle: 'Monthly Revenue by Group', grpTrendSub: 'USD revenue per group over time',
     grpCumTitle: 'Cumulative Revenue', grpCumSub: 'Running USD total per group',
@@ -4750,6 +4883,10 @@ const T = {
     spdStoreTitle: '各店铺营收', spdStoreSub: '各店铺美元营收',
     spdRankTitle: '每月排名趋势', spdRankSub: '每月团队美元排名（1=最佳）',
     spdDowTitle: '按星期活跃度', spdDowSub: '按星期几的订单数',
+    spdQtrTitle: '季度营收', spdQtrSub: '各季度美元营收',
+    spdVsTeamTitle: '个人 vs 团队均值', spdVsTeamSub: '月度美元：该业务员 vs 团队平均',
+    spdGrowthTitle: '环比增长', spdGrowthSub: '美元营收较上月变化',
+    spdParetoTitle: '营收集中度', spdParetoSub: '按订单排名的累计美元占比',
     grpKpiSec: '小组对比', grpHighlightsSec: '对比亮点',
     grpTrendTitle: '小组月度营收', grpTrendSub: '各小组美元营收变化',
     grpCumTitle: '累计营收', grpCumSub: '各小组累计美元营收',
