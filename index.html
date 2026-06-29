@@ -4869,13 +4869,34 @@ function renderSpDetail() {
     options: darkOpts({ yPfx: '$' })
   });
 
-  // ── Month-over-month growth（环比增长率；绿涨红跌）──
-  const growthVals = monthsAll.map((mm, i) => { if (i === 0) return null; const prev = mUsd[monthsAll[i - 1]] || 0, cur = mUsd[mm] || 0; return prev > 0 ? (cur - prev) / prev * 100 : null; });
+  // ── Month-over-month growth（环比增长率）──
+  // 基数过小（< $5K）的月份跳过，避免接近零的基数算出爆表百分比；显示值截断到 ±300%，
+  // 让单个异常月不会压扁整张图（与「增长趋势」页的处理一致）。真实值仍在悬浮提示里展示。
+  const SPD_MIN_BASE = 5000, SPD_CAP = 300;
+  const gRaw = monthsAll.map((mm, i) => {
+    if (i === 0) return null;
+    const prev = mUsd[monthsAll[i - 1]] || 0, cur = mUsd[mm] || 0;
+    if (prev < SPD_MIN_BASE) return null;
+    return +((cur - prev) / prev * 100).toFixed(1);
+  });
+  const gClamped = gRaw.map(v => v == null ? null : Math.max(-SPD_CAP, Math.min(SPD_CAP, v)));
+  const gColors = gRaw.map(v => v == null ? 'rgba(139,148,158,0.4)' : v >= 0 ? 'rgba(63,185,80,0.75)' : 'rgba(247,129,102,0.75)');
   dc('chartSpdGrowth');
+  const gOpts = darkOpts({});
+  gOpts.scales.y.ticks.callback = v => v + '%';
+  gOpts.scales.y.suggestedMin = -100;
+  gOpts.scales.y.suggestedMax = SPD_CAP;
+  gOpts.plugins.legend.display = false;
+  gOpts.plugins.tooltip.callbacks = { label: ctx => {
+    const v = gRaw[ctx.dataIndex];
+    if (v == null) return ' ' + (zh ? '基数过小' : 'base too small');
+    return ' ' + (v >= 0 ? '+' : '') + v + '%' + (Math.abs(v) > SPD_CAP ? ' (' + (zh ? '已截断' : 'clamped') + ')' : '');
+  } };
+  gOpts.plugins.datalabels = { display: false };
   CI.chartSpdGrowth = new Chart(document.getElementById('chartSpdGrowth'), {
     type: 'bar',
-    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '环比' : 'MoM %', data: growthVals, backgroundColor: growthVals.map(v => v == null ? '#8b949e' : v >= 0 ? 'rgba(63,185,80,0.75)' : 'rgba(248,81,73,0.75)'), borderRadius: 3, datalabels: { display: false } }] },
-    options: darkOpts({})
+    data: { labels: monthsAll.map(monthLabel), datasets: [{ label: zh ? '环比' : 'MoM %', data: gClamped, backgroundColor: gColors, borderRadius: 3 }] },
+    options: gOpts
   });
 
   // ── Revenue concentration（订单营收集中度 / 帕累托累计%）──
