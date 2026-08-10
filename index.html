@@ -181,6 +181,9 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 /* departed (former) salesperson — no 花名, shown greyed */
 .sp-off{color:var(--muted)!important;opacity:.6;font-style:italic;font-weight:400!important}
 .hm .sp-off{font-weight:400!important}
+/* departed but still clickable (历史业绩保留)：置灰 + 保留可点击的下划线与 hover 提亮 */
+.sp-link.sp-off{opacity:.72}
+.sp-link.sp-off:hover{color:var(--accent)!important;opacity:1}
 /* admin (real-name) mode indicator */
 #adminBtn.admin-on{background:linear-gradient(135deg,var(--g5),#f59e0b);border-color:transparent;color:#fff;font-weight:600}
 
@@ -211,6 +214,7 @@ td{padding:10px 14px;font-size:13px;font-variant-numeric:tabular-nums}
 .spd-hstat-l{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:5px}
 @media(max-width:680px){.spd-hero{flex-direction:column;align-items:flex-start}.spd-hero-stats{width:100%}}
 .sp-badge-active{display:inline-block;font-size:10.5px;font-weight:600;color:var(--g2);background:rgba(34,197,94,.13);padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.sp-badge-active.sp-badge-off{color:var(--muted);background:color-mix(in srgb,var(--muted) 15%,transparent)}
 .btn-back{cursor:pointer;margin-bottom:6px}
 /* ── Group Analysis — head-to-head "versus" treatment ───────────────────────── */
 .grp-vs-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
@@ -1376,6 +1380,8 @@ const SP_ALIASES = {
   '张琳':'观星客','朱雯梦':'凌云渡','陆浩杰':'飞羽卫','沈志芳':'凌波',
   '黄冰鑫':'尤川','陆雨冬':'陆小凤','庞宁':'白玉汤','周泓瑜':'千机变'
 };
+// 已离职但保留花名与历史业绩的业务员：名字置灰，但仍可点击进入画像页查看历史数据。
+const SP_RESIGNED = new Set(['张婷婷']);
 // 业务员 → 所属门店（权威映射）。数据里的 store 字段是逐单门店，未必等于业务员的团队归属店，
 // 故此处显式登记；表外业务员回退到其订单中出现最多的门店。
 const SP_STORES = {
@@ -1427,19 +1433,29 @@ function spName(real) {
   if (IS_ADMIN) return name;
   return SP_ALIASES[name] || name;
 }
-// 是否为已离职业务员（在数据中出现但无花名）。
+// 是否为已离职业务员（置灰显示）。两类：
+// 1) 不在花名表内 —— 视为历史离职人员，置灰且不可点击；
+// 2) 在 SP_RESIGNED 内 —— 已离职但保留花名与历史业绩，置灰但仍可点击进入画像页。
 function spDeparted(real) {
   const name = String(real ?? '').trim();
-  return !!name && !SP_ALIASES[name];
+  return !!name && (!SP_ALIASES[name] || SP_RESIGNED.has(name));
+}
+// 是否可点击进入画像页：在花名表内即可（含已离职但保留入口者）。
+function spClickable(real) {
+  const name = String(real ?? '').trim();
+  return !!name && !!SP_ALIASES[name];
 }
 // 业务员姓名的 HTML（含已离职置灰）。用于表格/进度条/热力图等 HTML 渲染点。
 function spHtml(real) {
   const name = String(real ?? '').trim();
   if (!name) return '';
   const shown = spName(name);
-  if (spDeparted(name)) return `<span class="sp-off" title="${escHtml(t('departedTip'))}">${escHtml(shown)}</span>`;
-  // 在职业务员：可点击进入画像页（data-sp 存真实姓名，按真实姓名聚合）
-  return `<span class="sp-link" data-sp="${escHtml(name)}" role="button" tabindex="0" title="${escHtml(t('spViewProfile'))}">${escHtml(shown)}</span>`;
+  const departed = spDeparted(name);
+  if (!spClickable(name)) return `<span class="sp-off" title="${escHtml(t('departedTip'))}">${escHtml(shown)}</span>`;
+  // 可点击进入画像页（data-sp 存真实姓名，按真实姓名聚合）；已离职者叠加置灰样式
+  const cls = departed ? 'sp-link sp-off' : 'sp-link';
+  const tip = departed ? `${t('departedTip')} · ${t('spViewProfile')}` : t('spViewProfile');
+  return `<span class="${cls}" data-sp="${escHtml(name)}" role="button" tabindex="0" title="${escHtml(tip)}">${escHtml(shown)}</span>`;
 }
 // 把业务员姓名写入指定元素的 textContent，并按需置灰（用于 KPI 数值元素）。
 function setSp(id, real) {
@@ -1449,12 +1465,12 @@ function setSp(id, real) {
   const name = String(real ?? '').trim();
   const departed = spDeparted(name);
   el.classList.toggle('sp-off', departed);
-  if (name && !departed) {
+  if (spClickable(name)) {
     el.classList.add('sp-link');
     el.setAttribute('data-sp', name);
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
-    el.title = t('spViewProfile');
+    el.title = departed ? `${t('departedTip')} · ${t('spViewProfile')}` : t('spViewProfile');
   } else {
     el.classList.remove('sp-link');
     el.removeAttribute('data-sp');
@@ -4044,7 +4060,7 @@ function renderGroupSolo(gid, d, s, totalUsd, monthsAll, zh) {
 
   // 成员贡献（横向条，点击进入画像）
   const memOpts = darkOpts({ yPfx:'$', indexAxis:'y' });
-  memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memEntries[els[0].index]; if (e && !spDeparted(e.n)) showSpDetail(e.n); } };
+  memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memEntries[els[0].index]; if (e && spClickable(e.n)) showSpDetail(e.n); } };
   dc('chartGSoloMembers');
   CI.chartGSoloMembers = new Chart(document.getElementById('chartGSoloMembers'), { type:'bar', data:{ labels: memEntries.map(e => spName(e.n)), datasets:[{ label: zh ? '美元营收' : 'USD', data: memEntries.map(e => e.usd), backgroundColor: pc, borderRadius: 4, datalabels:{ display:false } }] }, options: memOpts });
 
@@ -4275,7 +4291,7 @@ function renderGroups() {
   GROUP_IDS.forEach(gid => Object.entries(G[gid].members).forEach(([name, mm]) => memberEntries.push({ name, u: mm.usd, gid })));
   memberEntries.sort((a, b) => b.u - a.u);
   const memOpts = darkOpts({ yPfx:'$', indexAxis:'y' });
-  memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memberEntries[els[0].index]; if (e && !spDeparted(e.name)) showSpDetail(e.name); } };
+  memOpts.onClick = (evt, els) => { if (els && els.length) { const e = memberEntries[els[0].index]; if (e && spClickable(e.name)) showSpDetail(e.name); } };
   dc('chartGrpMembers');
   CI.chartGrpMembers = new Chart(document.getElementById('chartGrpMembers'), {
     type:'bar',
@@ -4429,7 +4445,7 @@ function renderGroups() {
 // 点击在职业务员姓名 → 进入该业务员的画像分析页（按真实姓名在当前筛选集 F 上聚合）。
 function showSpDetail(real) {
   const name = String(real ?? '').trim();
-  if (!name || spDeparted(name)) return; // 仅在职业务员可进入
+  if (!spClickable(name)) return; // 仅花名表内业务员可进入（含已离职但保留入口者）
   // 记住来源页（从画像页内部不更新来源，避免覆盖）
   const cur = document.querySelector('.page.active');
   if (cur && cur.id !== 'page-spdetail') {
@@ -4521,7 +4537,16 @@ function renderSpDetail() {
   const shown = spName(real);
 
   // header（个人签名色：属组 → 小组色，否则按姓名哈希取调色板色）
-  document.getElementById('spdName').textContent = shown;
+  const _nameEl = document.getElementById('spdName');
+  _nameEl.textContent = shown;
+  // 已离职业务员：姓名置灰，右侧徽章由「在职」改为「已离职」
+  const _departed = spDeparted(real);
+  _nameEl.classList.toggle('sp-off', _departed);
+  const _badge = document.querySelector('#page-spdetail .sp-badge-active');
+  if (_badge) {
+    _badge.textContent = _departed ? t('spDepartedBadge') : t('spActiveBadge');
+    _badge.classList.toggle('sp-badge-off', _departed);
+  }
   const av = document.getElementById('spdAvatar');
   av.textContent = (shown || '·').slice(0, 1);
   const gidp = spGroup(real);
@@ -5039,7 +5064,7 @@ const T = {
     adminTokenRequired: 'Admin token is required to update sales data.',
     departedTip: 'Former employee (resigned)',
     spViewProfile: 'View salesperson profile',
-    spBackBtn: '← Back', spActiveBadge: 'Active',
+    spBackBtn: '← Back', spActiveBadge: 'Active', spDepartedBadge: 'Resigned',
     spdKpiSec: 'Performance Summary',
     spdTrendTitle: 'Monthly Revenue', spdTrendSub: 'USD revenue & orders over time',
     spdCnTitle: 'Top Markets', spdCnSub: 'USD revenue by country',
@@ -5189,7 +5214,7 @@ const T = {
     adminTokenRequired: '需要管理令牌才能更新销售数据。',
     departedTip: '已离职',
     spViewProfile: '查看业务员画像',
-    spBackBtn: '← 返回', spActiveBadge: '在职',
+    spBackBtn: '← 返回', spActiveBadge: '在职', spDepartedBadge: '已离职',
     spdKpiSec: '业绩概览',
     spdTrendTitle: '月度营收', spdTrendSub: '美元营收与订单量变化',
     spdCnTitle: '主要市场', spdCnSub: '各国美元营收',
